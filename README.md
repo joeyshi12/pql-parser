@@ -6,7 +6,7 @@ Plot query language parser library.
 
 ## To Do
 
-- [ ] Docstrings
+- [ ] Docstrings and `types.d.ts`
 - [ ] Nested and chained WHERE clause conditions
 - [ ] GROUP BY
 - [ ] HAVING
