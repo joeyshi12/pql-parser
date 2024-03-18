@@ -102,7 +102,7 @@ export class Lexer {
                             return { type: TokenType.NULL, value: identifier.toUpperCase() };
                         }
                     default:
-                        // TODO: simplify
+                        // TODO: simplify this
                         if (!this._currentChar || /[\s,)]/.test(this._currentChar)) {
                             return { type: TokenType.IDENTIFIER, value: identifier };
                         }
@@ -134,7 +134,7 @@ export class Lexer {
 
     private readAlphanumeric(): string {
         let result = "";
-        while (this._currentChar && (this.isAlphabetic(this._currentChar) || this.isDigit(this._currentChar) || this._currentChar === "_")) {
+        while (this._currentChar && /[A-Za-z0-9_]/.test(this._currentChar)) {
             result += this._currentChar;
             this.advance();
         }

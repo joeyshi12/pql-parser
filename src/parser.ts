@@ -15,6 +15,7 @@ export class Parser {
         const plotType = this.consumePlotClause();
         const usingAttributes = this.consumeUsingClause();
         const whereFilter = this.consumeWhereClauseOptional();
+        this.consumeToken(TokenType.EOF);
         return {
             plotType,
             usingAttributes,
