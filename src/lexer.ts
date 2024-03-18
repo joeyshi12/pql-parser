@@ -1,4 +1,5 @@
-import { Token, TokenType } from "./token";
+import { PQLParsingError } from "./exceptions";
+import { Token, TokenType } from "./types";
 
 export class Lexer {
     private _input: string;
@@ -8,6 +9,10 @@ export class Lexer {
     constructor(input: string) {
         this._input = input;
         this._currentChar = this._input[this._position];
+    }
+
+    public currentPosition() {
+        return this._position;
     }
 
     public peek(): string | null {
@@ -48,23 +53,23 @@ export class Lexer {
                     if (this.peek() === "=") {
                         this.advance();
                         this.advance();
-                        return { type: TokenType.GREATER_OR_EQUAL_THAN, value: ">=" };
+                        return { type: TokenType.COMPARISON_OPERATOR, value: ">=" };
                     } else {
                         this.advance();
-                        return { type: TokenType.GREATER_THAN, value: ">" };
+                        return { type: TokenType.COMPARISON_OPERATOR, value: ">" };
                     }
                 case "<":
                     if (this.peek() === "=") {
                         this.advance();
                         this.advance();
-                        return { type: TokenType.LESS_OR_EQUAL_THAN, value: "<=" };
+                        return { type: TokenType.COMPARISON_OPERATOR, value: "<=" };
                     } else {
                         this.advance();
-                        return { type: TokenType.LESS_THAN, value: "<" };
+                        return { type: TokenType.COMPARISON_OPERATOR, value: "<" };
                     }
                 case "=":
                     this.advance();
-                    return { type: TokenType.EQUAL, value: "=" };
+                    return { type: TokenType.COMPARISON_OPERATOR, value: "=" };
                 default:
             }
 
@@ -72,36 +77,38 @@ export class Lexer {
                 const identifier = this.readAlphanumeric();
                 switch (identifier.toUpperCase()) {
                     case "PLOT":
-                    case "BAR":
-                    case "LINE":
-                    case "SCATTER":
                     case "USING":
                     case "AS":
                     case "WHERE":
                     case "AND":
                     case "OR":
-                    case "GROUPBY":
-                    case "HAVING":
                         if (!this._currentChar || this._currentChar === " ") {
-                            return { type: TokenType.KEYWORD, value: identifier };
+                            return { type: TokenType.KEYWORD, value: identifier.toUpperCase() };
+                        }
+                    case "BAR":
+                    case "LINE":
+                    case "SCATTER":
+                        if (!this._currentChar || this._currentChar === " ") {
+                            return { type: TokenType.PLOT_TYPE, value: identifier.toUpperCase() };
                         }
                     case "AVG":
                     case "COUNT":
                     case "SUM":
                         if (/[\s(]/.test(this._currentChar)) {
-                            return { type: TokenType.KEYWORD, value: identifier };
+                            return { type: TokenType.AGGREGATION_FUNCTION, value: identifier.toUpperCase() };
                         }
                     case "NULL":
                         if (!this._currentChar || this._currentChar === " ") {
-                            return { type: TokenType.NULL, value: identifier };
+                            return { type: TokenType.NULL, value: identifier.toUpperCase() };
                         }
                     default:
+                        // TODO: simplify
                         if (!this._currentChar || /[\s,)]/.test(this._currentChar)) {
                             return { type: TokenType.IDENTIFIER, value: identifier };
                         }
                 }
             }
-            throw new Error("Invalid character");
+            throw new PQLParsingError("Invalid character");
         }
         return { type: TokenType.EOF, value: "" };
     }
@@ -138,7 +145,7 @@ export class Lexer {
         let result = "";
         while (this._currentChar !== "'") {
             if (!this._currentChar) {
-                throw new Error("Unterminated string");
+                throw new PQLParsingError("Unterminated string");
             }
             result += this._currentChar;
             this.advance();

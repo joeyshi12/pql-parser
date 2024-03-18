@@ -1,123 +1,118 @@
-import { Token, TokenType } from './token';
+import { PQLSyntaxTree, Token, TokenType, UsingAttribute, WhereFilter } from './types';
 import { Lexer } from './lexer';
+import { PQLParsingError } from './exceptions';
 
 export class Parser {
-    private lexer: Lexer;
-    private currentToken: Token;
+    private _lexer: Lexer;
+    private _currentToken: Token;
 
     constructor(lexer: Lexer) {
-        this.lexer = lexer;
-        this.currentToken = this.lexer.nextToken();
+        this._lexer = lexer;
+        this._currentToken = this._lexer.nextToken();
     }
 
-    parse() {
-        this.eat(TokenType.KEYWORD)
-        if (this.currentToken.value !== "PLOT") {
-            throw new Error("Must begin query with PLOT");
-        }
-        const plotType = this.parsePlotType();
-        const usingClause = this.parseUsingClause();
-        //const whereClause = this.parseOptionalClause(this.condition);
-        //const groupByClause = this.parseOptionalClause(this.identifier);
-        //const havingClause = this.parseOptionalClause(this.aggregatedCondition);
-
+    parse(): PQLSyntaxTree {
+        const plotType = this.consumePlotClause();
+        const usingAttributes = this.consumeUsingClause();
+        const whereFilter = this.consumeWhereClauseOptional();
         return {
             plotType,
-            usingClause,
-            //whereClause,
-            //groupByClause,
-            //havingClause
+            usingAttributes,
+            whereFilter
         };
     }
 
-    private error() {
-        throw new Error("Invalid syntax");
+    private consumePlotClause(): string {
+        const plotToken = this.consumeToken(TokenType.KEYWORD);
+        if (plotToken.value !== "PLOT") {
+            throw new PQLParsingError("Must begin query with PLOT");
+        }
+        return this.consumeToken(TokenType.PLOT_TYPE).value;
     }
 
-    private eat(tokenType: TokenType) {
-        if (this.currentToken.type === tokenType) {
-            this.currentToken = this.lexer.nextToken();
-        } else {
-            this.error();
+    private consumeUsingClause(): UsingAttribute[] {
+        const usingToken = this.consumeToken(TokenType.KEYWORD);
+        if (usingToken.value !== "USING") {
+            throw new PQLParsingError("Expected using clause");
+        }
+
+        const attributes = [];
+        while (true) {
+            const attribute = this.consumeUsingAttribute();
+            attributes.push(attribute);
+            if (this._currentToken.type === TokenType.COMMA) {
+                this.consumeToken(TokenType.COMMA);
+            } else {
+                break;
+            }
+        }
+        return attributes;
+    }
+
+    // TODO: handle chained and nested where clauses
+    private consumeWhereClauseOptional(): WhereFilter | undefined {
+        if (this._currentToken.value !== "WHERE") {
+            return undefined;
+        }
+        this.consumeToken(TokenType.KEYWORD);
+        const column = this.consumeToken(TokenType.IDENTIFIER).value;
+        const comparisonOperator = this.consumeToken(TokenType.COMPARISON_OPERATOR).value;
+
+        let value;
+        switch (comparisonOperator) {
+            case ">":
+                value = Number(this.consumeToken(TokenType.NUMBER).value);
+                return { gt: { column, value } };
+            case ">=":
+                value = Number(this.consumeToken(TokenType.NUMBER).value);
+                return { gte: { column, value } };
+            case "<":
+                value = Number(this.consumeToken(TokenType.NUMBER).value);
+                return { lt: { column, value } };
+            case "<=":
+                value = Number(this.consumeToken(TokenType.NUMBER).value);
+                return { lte: { column, value } };
+            case "=":
+                const token = this.nextToken();
+                switch (token.type) {
+                    case TokenType.STRING:
+                        return { eq: { column, value: token.value  } };
+                    case TokenType.NUMBER:
+                        return { eq: { column, value: Number(token.value) } };
+                    case TokenType.NULL:
+                        return { eq: { column, value: null } };
+                    default:
+                        throw new PQLParsingError("Equal comparison allowed only for string, number, and null");
+                }
+            default:
+                throw new PQLParsingError(`Invalid comparison operator ${comparisonOperator}`)
         }
     }
 
-    private parsePlotType() {
-        const token = this.currentToken;
-        if (token.type === TokenType.KEYWORD) {
-            this.eat(token.type);
-            return token.value;
+    private consumeUsingAttribute(): UsingAttribute {
+        const columnName = this.consumeToken(TokenType.IDENTIFIER).value;
+        let displayName = undefined;
+        if (this._currentToken.value === "AS") {
+            this.consumeToken(TokenType.KEYWORD);
+            displayName = this.consumeToken(TokenType.IDENTIFIER).value;
+        }
+        return { column: columnName, displayName }
+    }
+
+    private nextToken(): Token {
+        const token = this._currentToken;
+        this._currentToken = this._lexer.nextToken();
+        return token;
+    }
+
+    private consumeToken(tokenType: TokenType): Token {
+        const token = this._currentToken;
+        if (token.type === tokenType) {
+            this._currentToken = this._lexer.nextToken();
+            return token;
         } else {
-            this.error();
+            throw new PQLParsingError(`Unexpected token ${JSON.stringify(this._currentToken)} at position ${this._lexer.currentPosition()}`)
         }
     }
-
-    private parseUsingClause() {
-        this.eat(TokenType.KEYWORD);
-        const attribute1 = this.aggregatedColumn();
-        this.eat(TokenType.KEYWORD);
-        const attribute2 = this.aggregatedColumn();
-        return [attribute1, attribute2];
-    }
-
-    private aggregatedColumn() {
-        const token = this.currentToken;
-        if (token.type === TokenType.KEYWORD) {
-            const func = token.value;
-            this.eat(token.type);
-            this.eat(TokenType.LPAREN);
-            const identifier = this.identifier();
-            this.eat(TokenType.RPAREN);
-            return `${func}(${identifier})`;
-        } else {
-            return this.identifier();
-        }
-    }
-
-    private identifier() {
-        const token = this.currentToken;
-        this.eat(TokenType.IDENTIFIER);
-        return token.value;
-    }
-
-    //private condition() {
-    //    const identifier = this.identifier();
-    //    const operator = this.currentToken;
-    //    this.eat(TokenType.COMPARISON_OPERATOR);
-    //    const value = this.currentToken;
-    //    if (value.type === TokenType.NUMBER || value.type === TokenType.STRING || value.type === TokenType.NULL) {
-    //        this.eat(value.type);
-    //        return `${identifier} ${operator.value} ${value.value}`;
-    //    } else {
-    //        this.error();
-    //    }
-    //}
-
-    //private booleanOperator() {
-    //    const token = this.currentToken;
-    //    if (token.type === TokenType.OR || token.type === TokenType.AND_OPERATOR) {
-    //        this.eat(token.type);
-    //        return token.value;
-    //    } else {
-    //        this.error();
-    //    }
-    //}
-
-    //private parseOptionalClause(clauseFunction: () => any) {
-    //    let clause = '';
-    //    if (this.currentToken.type === clauseFunction.name.toUpperCase().replace('CLAUSE', '')) {
-    //        this.eat(this.currentToken.type);
-    //        clause += clauseFunction.call(this);
-    //        while (this.currentToken.type === TokenType.OR || this.currentToken.type === TokenType.AND_OPERATOR) {
-    //            clause += ' ' + this.booleanOperator() + ' ';
-    //            clause += clauseFunction.call(this);
-    //        }
-    //    }
-    //    return clause;
-    //}
-
-    //private aggregatedCondition() {
-    //    return this.aggregatedColumn();
-    //}
 }
 
