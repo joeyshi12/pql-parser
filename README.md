@@ -12,6 +12,7 @@ Plot query language parser library.
 - [ ] Nested and chained WHERE clause conditions
 - [x] GROUP BY
 - [ ] HAVING
+- [ ] Semantic validation for AST
 
 ## Syntax
 
