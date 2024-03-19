@@ -22,11 +22,13 @@ export interface PQLSyntaxTree {
     plotType: string;
     usingAttributes: UsingAttribute[];
     whereFilter?: WhereFilter;
+    groupByColumn?: string;
 }
 
 export interface UsingAttribute {
     column: string;
     displayName?: string;
+    aggregationFunction?: string;
 }
 
 export interface WhereFilter {}

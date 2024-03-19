@@ -8,9 +8,9 @@ Plot query language parser library.
 
 ## To Do
 
-- [ ] Docstrings and `types.d.ts`
+- [x] Docstrings and `types.d.ts`
 - [ ] Nested and chained WHERE clause conditions
-- [ ] GROUP BY
+- [x] GROUP BY
 - [ ] HAVING
 
 ## Syntax

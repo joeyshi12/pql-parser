@@ -2,6 +2,9 @@ import { PQLSyntaxTree, Token, TokenType, UsingAttribute, WhereFilter } from './
 import { Lexer } from './lexer';
 import { PQLParsingError } from './exceptions';
 
+/**
+ * Parser for Plot Query Language (PQL) queries
+ */
 export class Parser {
     private _lexer: Lexer;
     private _currentToken: Token;
@@ -11,15 +14,21 @@ export class Parser {
         this._currentToken = this._lexer.nextToken();
     }
 
+   /**
+    * Parses the PQL query into a syntax tree
+    * @returns The syntax tree representing the parsed PQL query
+    */
     parse(): PQLSyntaxTree {
         const plotType = this.consumePlotClause();
         const usingAttributes = this.consumeUsingClause();
         const whereFilter = this.consumeWhereClauseOptional();
+        const groupByColumn = this.consumeGroupByClauseOptional();
         this.consumeToken(TokenType.EOF);
         return {
             plotType,
             usingAttributes,
-            whereFilter
+            whereFilter,
+            groupByColumn
         };
     }
 
@@ -90,14 +99,34 @@ export class Parser {
         }
     }
 
+    private consumeGroupByClauseOptional(): string | undefined {
+        if (this._currentToken.value !== "GROUPBY") {
+            return undefined;
+        }
+        this.consumeToken(TokenType.KEYWORD);
+        return this.consumeToken(TokenType.IDENTIFIER).value;
+    }
+
     private consumeUsingAttribute(): UsingAttribute {
-        const columnName = this.consumeToken(TokenType.IDENTIFIER).value;
+        let column = undefined;
+        let aggregationFunction = undefined;
+
+        if (this._currentToken.type === TokenType.AGGREGATION_FUNCTION) {
+            aggregationFunction = this.consumeToken(TokenType.AGGREGATION_FUNCTION).value;
+            this.consumeToken(TokenType.LPAREN);
+            column = this.consumeToken(TokenType.IDENTIFIER).value;
+            this.consumeToken(TokenType.RPAREN);
+        } else {
+            column = this.consumeToken(TokenType.IDENTIFIER).value;
+        }
+
         let displayName = undefined;
         if (this._currentToken.value === "AS") {
             this.consumeToken(TokenType.KEYWORD);
             displayName = this.consumeToken(TokenType.IDENTIFIER).value;
         }
-        return { column: columnName, displayName }
+
+        return { column, displayName, aggregationFunction }
     }
 
     private nextToken(): Token {

@@ -1,6 +1,9 @@
 import { PQLParsingError } from "./exceptions";
 import { Token, TokenType } from "./types";
 
+/**
+ * Lexer for tokenizing Plot Query Language (PQL) queries
+ */
 export class Lexer {
     private _input: string;
     private _position: number = 0;
@@ -11,10 +14,18 @@ export class Lexer {
         this._currentChar = this._input[this._position];
     }
 
+    /**
+     * Retrieves the current position of the lexer
+     * @returns The current position of the lexer in the input string
+     */
     public currentPosition() {
         return this._position;
     }
 
+    /**
+     * Peeks at the next character in the input string without advancing the lexer position
+     * @returns The next character in the input string, or null if at the end of the input
+     */
     public peek(): string | null {
         const peekPosition = this._position + 1;
         if (peekPosition >= this._input.length) {
@@ -23,6 +34,10 @@ export class Lexer {
         return this._input[peekPosition];
     }
 
+    /**
+     * Retrieves the next token from the input string
+     * @returns The next token found in the input string
+     */
     public nextToken(): Token {
         while (this._currentChar) {
             if (/\s/.test(this._currentChar)) {
@@ -30,16 +45,14 @@ export class Lexer {
                 continue;
             }
 
-            if (this._currentChar === "'") {
-                this.advance();
-                return { type: TokenType.STRING, value: this.readString() };
-            }
-
             if (this.isDigit(this._currentChar)) {
                 return { type: TokenType.NUMBER, value: this.readNumber() };
             }
 
             switch (this._currentChar) {
+                case "'":
+                    this.advance();
+                    return { type: TokenType.STRING, value: this.readString() };
                 case ",":
                     this.advance();
                     return { type: TokenType.COMMA, value: "," };
@@ -82,6 +95,7 @@ export class Lexer {
                     case "WHERE":
                     case "AND":
                     case "OR":
+                    case "GROUPBY":
                         if (!this._currentChar || this._currentChar === " ") {
                             return { type: TokenType.KEYWORD, value: identifier.toUpperCase() };
                         }

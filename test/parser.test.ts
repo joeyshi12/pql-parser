@@ -58,3 +58,17 @@ test("plot statement with greater than where clause", () => {
     }
     expect(parser.parse()).toEqual(expected)
 })
+
+test("plot statement with groupby clause", () => {
+    const input = "PLOT BAR USING xcol, AVG(ycol) GROUPBY xcol";
+    const parser = new Parser(new Lexer(input));
+    const expected: PQLSyntaxTree = {
+        plotType: "BAR",
+        usingAttributes: [
+            { column: "xcol" },
+            { column: "ycol", aggregationFunction: "AVG" }
+        ],
+        groupByColumn: "xcol"
+    };
+    expect(parser.parse()).toEqual(expected)
+})

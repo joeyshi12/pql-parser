@@ -91,6 +91,26 @@ test("plot statement with less than or equal where clause", () => {
     expect(actual).toEqual(expected)
 })
 
+test("plot statement with groupby clause", () => {
+    const input = "PLOT BAR USING xcol, AVG(ycol) GROUPBY xcol";
+    const lexer = new Lexer(input);
+    const expected = [
+        { type: TokenType.KEYWORD, value: "PLOT" },
+        { type: TokenType.PLOT_TYPE, value: "BAR" },
+        { type: TokenType.KEYWORD, value: "USING" },
+        { type: TokenType.IDENTIFIER, value: "xcol" },
+        { type: TokenType.COMMA, value: "," },
+        { type: TokenType.AGGREGATION_FUNCTION, value: "AVG" },
+        { type: TokenType.LPAREN, value: "(" },
+        { type: TokenType.IDENTIFIER, value: "ycol" },
+        { type: TokenType.RPAREN, value: ")" },
+        { type: TokenType.KEYWORD, value: "GROUPBY" },
+        { type: TokenType.IDENTIFIER, value: "xcol" }
+    ]
+    const actual = getTokens(lexer)
+    expect(actual).toEqual(expected)
+})
+
 test("plot statement with invalid alphanumeric token", () => {
     const input = "PLOT-";
     const lexer = new Lexer(input);
