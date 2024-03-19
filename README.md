@@ -2,7 +2,7 @@
 
 ![node.js.yml](https://github.com/joeyshi12/pql-parser/actions/workflows/node.js.yml/badge.svg)
 ![npm-publish.yml](https://github.com/joeyshi12/pql-parser/actions/workflows/npm-publish.yml/badge.svg)
-![npm](https://img.shields.io/npm/v/pql-parser.svg?maxAge=3600)
+![npm](https://img.shields.io/npm/v/pql-parser.svg)
 
 Plot query language parser library.
 
