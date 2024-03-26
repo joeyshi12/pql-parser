@@ -6,6 +6,8 @@
 
 Plot query language parser library.
 
+A simple CSV visualizer tool made with this parser can be found at <a href="https://devtools.joeyshi.xyz/csv_vis">https://devtools.joeyshi.xyz/csv_vis</a>.
+
 ## To Do
 
 - [x] Docstrings and `types.d.ts`
