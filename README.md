@@ -14,7 +14,7 @@ A simple CSV visualizer tool made with this parser can be found at <a href="http
 - [ ] Nested and chained WHERE clause conditions
 - [x] GROUP BY
 - [ ] HAVING
-- [ ] Semantic validation for AST
+- [x] Semantic validation for AST
 
 ## Syntax
 
@@ -35,11 +35,11 @@ USING <x_column> [AS <x_label>], <y_column> [AS <y_label>]
 
 <using_clause> ::= "USING" <attributes>
 
-<where_clause> ::= "WHERE" <condition> {<boolean_operator> <condition>}
+<where_clause> ::= "WHERE" <where_condition>
 
 <group_by_clause> ::= "GROUP BY" <identifier>
 
-<having_clause> ::= "HAVING" <aggregated_condition> {<boolean_operator> <aggreated_condition>}
+<having_clause> ::= "HAVING" <having_condition>
 
 <boolean_operator> ::= "OR" | "AND"
 
@@ -53,9 +53,13 @@ USING <x_column> [AS <x_label>], <y_column> [AS <y_label>]
 
 <identifier> ::= <alphabetic> { <alphabetic> | <digit> | "_" }
 
-<aggregated_condition> ::= <aggregation_function> "(" <identifier> ")" | <identifier>
+<where_condition> ::= <where_condition_group> { "OR" <where_condition_group> } | <where_condition_group> { "AND" <where_condition_group> }
 
-<condition> ::= <identifier> <comparison_operator> <value>
+<where_condition_group> ::= <identifier> <comparison_operator> <value> | "(" <where_condition> ")"
+
+<having_condition> ::= <having_condition_group> { "OR" <having_condition_group> } | <having_condition_group> { "AND" <having_condition_group> }
+
+<having_condition_group> ::= <aggregated_column> <comparison_operator> <value> | "(" <having_condition> ")"
 
 <comparison_operator> ::= ">" | "<" | ">=" | "<=" | "="
 

@@ -41,53 +41,53 @@ export class Lexer {
     public nextToken(): Token {
         while (this._currentChar) {
             if (/\s/.test(this._currentChar)) {
-                this.skipWhitespace();
+                this._skipWhitespace();
                 continue;
             }
 
-            if (this.isDigit(this._currentChar)) {
-                return { type: TokenType.NUMBER, value: this.readNumber() };
+            if (this._isDigit(this._currentChar)) {
+                return { type: TokenType.NUMBER, value: this._readNumber() };
             }
 
             switch (this._currentChar) {
                 case "'":
-                    this.advance();
-                    return { type: TokenType.STRING, value: this.readString() };
+                    this._advance();
+                    return { type: TokenType.STRING, value: this._readString() };
                 case ",":
-                    this.advance();
+                    this._advance();
                     return { type: TokenType.COMMA, value: "," };
                 case "(":
-                    this.advance();
+                    this._advance();
                     return { type: TokenType.LPAREN, value: "(" };
                 case ")":
-                    this.advance();
+                    this._advance();
                     return { type: TokenType.RPAREN, value: ")" };
                 case ">":
                     if (this.peek() === "=") {
-                        this.advance();
-                        this.advance();
+                        this._advance();
+                        this._advance();
                         return { type: TokenType.COMPARISON_OPERATOR, value: ">=" };
                     } else {
-                        this.advance();
+                        this._advance();
                         return { type: TokenType.COMPARISON_OPERATOR, value: ">" };
                     }
                 case "<":
                     if (this.peek() === "=") {
-                        this.advance();
-                        this.advance();
+                        this._advance();
+                        this._advance();
                         return { type: TokenType.COMPARISON_OPERATOR, value: "<=" };
                     } else {
-                        this.advance();
+                        this._advance();
                         return { type: TokenType.COMPARISON_OPERATOR, value: "<" };
                     }
                 case "=":
-                    this.advance();
+                    this._advance();
                     return { type: TokenType.COMPARISON_OPERATOR, value: "=" };
                 default:
             }
 
-            if (this.isAlphabetic(this._currentChar)) {
-                const identifier = this.readAlphanumeric();
+            if (this._isAlphabetic(this._currentChar)) {
+                const identifier = this._readAlphanumeric();
                 switch (identifier.toUpperCase()) {
                     case "PLOT":
                     case "USING":
@@ -127,52 +127,52 @@ export class Lexer {
         return { type: TokenType.EOF, value: "" };
     }
 
-    private advance() {
+    private _advance() {
         this._position++;
         this._currentChar = this._input[this._position];
     }
 
-    private skipWhitespace() {
+    private _skipWhitespace() {
         while (this._currentChar && /\s/.test(this._currentChar)) {
-            this.advance();
+            this._advance();
         }
     }
 
-    private isAlphabetic(char: string) {
+    private _isAlphabetic(char: string) {
         return /[A-Za-z]/.test(char);
     }
 
-    private isDigit(char: string) {
+    private _isDigit(char: string) {
         return /[0-9]/.test(char);
     }
 
-    private readAlphanumeric(): string {
+    private _readAlphanumeric(): string {
         let result = "";
         while (this._currentChar && /[A-Za-z0-9_]/.test(this._currentChar)) {
             result += this._currentChar;
-            this.advance();
+            this._advance();
         }
         return result;
     }
 
-    private readString(): string {
+    private _readString(): string {
         let result = "";
         while (this._currentChar !== "'") {
             if (!this._currentChar) {
                 throw new PQLParsingError("Unterminated string");
             }
             result += this._currentChar;
-            this.advance();
+            this._advance();
         }
-        this.advance(); // Consume closing quote
+        this._advance(); // Consume closing quote
         return result;
     }
 
-    private readNumber(): string {
+    private _readNumber(): string {
         let result = "";
-        while (this._currentChar && this.isDigit(this._currentChar)) {
+        while (this._currentChar && this._isDigit(this._currentChar)) {
             result += this._currentChar;
-            this.advance();
+            this._advance();
         }
         return result;
     }

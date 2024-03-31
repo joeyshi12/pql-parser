@@ -23,7 +23,7 @@ export interface PQLSyntaxTree {
     groupByColumn?: string;
 }
 export interface UsingAttribute {
-    column: string;
+    column?: string;
     displayName?: string;
     aggregationFunction?: string;
 }

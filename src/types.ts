@@ -26,7 +26,7 @@ export interface PQLSyntaxTree {
 }
 
 export interface UsingAttribute {
-    column: string;
+    column?: string;
     displayName?: string;
     aggregationFunction?: string;
 }

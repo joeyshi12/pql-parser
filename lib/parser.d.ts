@@ -12,11 +12,12 @@ export declare class Parser {
      * @returns The syntax tree representing the parsed PQL query
      */
     parse(): PQLSyntaxTree;
-    private consumePlotClause;
-    private consumeUsingClause;
-    private consumeWhereClauseOptional;
-    private consumeGroupByClauseOptional;
-    private consumeUsingAttribute;
-    private nextToken;
-    private consumeToken;
+    private _validateSyntaxTree;
+    private _consumePlotClause;
+    private _consumeUsingClause;
+    private _consumeWhereClauseOptional;
+    private _consumeGroupByClauseOptional;
+    private _consumeUsingAttribute;
+    private _consumeToken;
+    private _consumeTokenType;
 }

@@ -72,3 +72,25 @@ test("plot statement with groupby clause", () => {
     };
     expect(parser.parse()).toEqual(expected)
 })
+
+test("regular query with invalid column", () => {
+    const input = "PLOT BAR USING xcol, AVG(ycol)";
+    const parser = new Parser(new Lexer(input));
+    try {
+        parser.parse();
+        fail()
+    } catch {
+        return;
+    }
+})
+
+test("aggregation query with invalid column", () => {
+    const input = "PLOT BAR USING xcol, ycol GROUPBY xcol";
+    const parser = new Parser(new Lexer(input));
+    try {
+        parser.parse();
+        fail()
+    } catch {
+        return;
+    }
+})

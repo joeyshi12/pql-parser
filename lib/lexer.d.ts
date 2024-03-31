@@ -22,11 +22,11 @@ export declare class Lexer {
      * @returns The next token found in the input string
      */
     nextToken(): Token;
-    private advance;
-    private skipWhitespace;
-    private isAlphabetic;
-    private isDigit;
-    private readAlphanumeric;
-    private readString;
-    private readNumber;
+    private _advance;
+    private _skipWhitespace;
+    private _isAlphabetic;
+    private _isDigit;
+    private _readAlphanumeric;
+    private _readString;
+    private _readNumber;
 }
