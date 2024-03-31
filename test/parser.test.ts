@@ -73,6 +73,20 @@ test("plot statement with groupby clause", () => {
     expect(parser.parse()).toEqual(expected)
 })
 
+test("plot statement with empty count aggregation", () => {
+    const input = "PLOT BAR USING xcol, COUNT() GROUPBY xcol";
+    const parser = new Parser(new Lexer(input));
+    const expected: PQLSyntaxTree = {
+        plotType: "BAR",
+        usingAttributes: [
+            { column: "xcol" },
+            { aggregationFunction: "COUNT" }
+        ],
+        groupByColumn: "xcol"
+    };
+    expect(parser.parse()).toEqual(expected)
+})
+
 test("regular query with invalid column", () => {
     const input = "PLOT BAR USING xcol, AVG(ycol)";
     const parser = new Parser(new Lexer(input));

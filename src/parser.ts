@@ -134,7 +134,7 @@ export class Parser {
             this._consumeTokenType(TokenType.LPAREN);
             if (this._currentToken.type.valueOf() === TokenType.IDENTIFIER.valueOf()) {
                 column = this._consumeTokenType(TokenType.IDENTIFIER).value;
-            } else if (this._currentToken.value !== "COUNT") {
+            } else if (aggregationFunction !== "COUNT") {
                 throw new PQLParsingError(`Missing identifier in aggregation function ${aggregationFunction}`);
             }
             this._consumeTokenType(TokenType.RPAREN);
