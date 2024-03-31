@@ -19,7 +19,7 @@ A simple CSV visualizer tool made with this parser can be found at <a href="http
 ## Syntax
 
 ```
-PLOT <plot_type>
+PLOT (BAR | LINE | SCATTER)
 USING <x_column> [AS <x_label>], <y_column> [AS <y_label>]
 [WHERE <condition>]
 [GROUP BY <column>]
