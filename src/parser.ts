@@ -1,6 +1,6 @@
 import { PQLSyntaxTree, Token, TokenType, UsingAttribute, WhereFilter } from './types';
 import { Lexer } from './lexer';
-import { PQLParsingError } from './exceptions';
+import { PQLError } from './exceptions';
 
 /**
  * Parser for Plot Query Language (PQL) queries
@@ -38,13 +38,13 @@ export class Parser {
         if (syntaxTree.groupByColumn) {
             syntaxTree.usingAttributes.forEach(attribute => {
                 if (!attribute.aggregationFunction && attribute.column !== syntaxTree.groupByColumn) {
-                    throw new PQLParsingError(`Invalid column ${attribute.column} - aggregation queries can only have aggregated or group by columns`);
+                    throw new PQLError(`Invalid column ${attribute.column} - aggregation queries can only have aggregated or group by columns`);
                 }
             });
         } else {
             syntaxTree.usingAttributes.forEach(attribute => {
                 if (attribute.aggregationFunction) {
-                    throw new PQLParsingError(`Cannot include aggregated column ${attribute.aggregationFunction}(${attribute.column}) without a group by clause`);
+                    throw new PQLError(`Cannot include aggregated column ${attribute.aggregationFunction}(${attribute.column}) without a group by clause`);
                 }
             });
         }
@@ -53,7 +53,7 @@ export class Parser {
     private _consumePlotClause(): string {
         const plotToken = this._consumeTokenType(TokenType.KEYWORD);
         if (plotToken.value !== "PLOT") {
-            throw new PQLParsingError("Must begin query with PLOT");
+            throw new PQLError("Must begin query with PLOT");
         }
         return this._consumeTokenType(TokenType.PLOT_TYPE).value;
     }
@@ -61,7 +61,7 @@ export class Parser {
     private _consumeUsingClause(): UsingAttribute[] {
         const usingToken = this._consumeTokenType(TokenType.KEYWORD);
         if (usingToken.value !== "USING") {
-            throw new PQLParsingError("Expected using clause");
+            throw new PQLError("Expected using clause");
         }
 
         const attributes = [];
@@ -110,10 +110,10 @@ export class Parser {
                     case TokenType.NULL:
                         return { eq: { column, value: null } };
                     default:
-                        throw new PQLParsingError("Equal comparison allowed only for string, number, and null");
+                        throw new PQLError("Equal comparison allowed only for string, number, and null");
                 }
             default:
-                throw new PQLParsingError(`Invalid comparison operator ${comparisonOperator}`)
+                throw new PQLError(`Invalid comparison operator ${comparisonOperator}`)
         }
     }
 
@@ -135,7 +135,7 @@ export class Parser {
             if (this._currentToken.type.valueOf() === TokenType.IDENTIFIER.valueOf()) {
                 column = this._consumeTokenType(TokenType.IDENTIFIER).value;
             } else if (aggregationFunction !== "COUNT") {
-                throw new PQLParsingError(`Missing identifier in aggregation function ${aggregationFunction}`);
+                throw new PQLError(`Missing identifier in aggregation function ${aggregationFunction}`);
             }
             this._consumeTokenType(TokenType.RPAREN);
         } else {
@@ -163,7 +163,7 @@ export class Parser {
             this._currentToken = this._lexer.nextToken();
             return token;
         } else {
-            throw new PQLParsingError(`Unexpected token ${JSON.stringify(this._currentToken)} at position ${this._lexer.currentPosition()}`)
+            throw new PQLError(`Unexpected token ${JSON.stringify(this._currentToken)} at position ${this._lexer.currentPosition()}`)
         }
     }
 }

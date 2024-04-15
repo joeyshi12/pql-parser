@@ -1,4 +1,4 @@
-import { PQLParsingError } from "./exceptions";
+import { PQLError } from "./exceptions";
 import { Token, TokenType } from "./types";
 
 /**
@@ -122,7 +122,7 @@ export class Lexer {
                         }
                 }
             }
-            throw new PQLParsingError("Invalid character");
+            throw new PQLError("Invalid character");
         }
         return { type: TokenType.EOF, value: "" };
     }
@@ -159,7 +159,7 @@ export class Lexer {
         let result = "";
         while (this._currentChar !== "'") {
             if (!this._currentChar) {
-                throw new PQLParsingError("Unterminated string");
+                throw new PQLError("Unterminated string");
             }
             result += this._currentChar;
             this._advance();
