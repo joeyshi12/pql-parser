@@ -1,4 +1,4 @@
-import { PQLSyntaxTree, Token, TokenType, UsingAttribute, WhereFilter } from './types';
+import { AggregationFunction, PQLSyntaxTree, PlotType, Token, TokenType, UsingAttribute, WhereFilter } from './types';
 import { Lexer } from './lexer';
 import { PQLError } from './exceptions';
 
@@ -23,7 +23,7 @@ export class Parser {
         const usingAttributes = this._consumeUsingClause();
         const whereFilter = this._consumeWhereClauseOptional();
         const groupByColumn = this._consumeGroupByClauseOptional();
-        this._consumeTokenType(TokenType.EOF);
+        this._consumeTokenType("EOF");
         const syntaxTree: PQLSyntaxTree = {
             plotType,
             usingAttributes,
@@ -50,16 +50,16 @@ export class Parser {
         }
     }
 
-    private _consumePlotClause(): string {
-        const plotToken = this._consumeTokenType(TokenType.KEYWORD);
+    private _consumePlotClause(): PlotType {
+        const plotToken = this._consumeTokenType("KEYWORD");
         if (plotToken.value !== "PLOT") {
             throw new PQLError("Must begin query with PLOT");
         }
-        return this._consumeTokenType(TokenType.PLOT_TYPE).value;
+        return <PlotType>this._consumeTokenType("PLOT_TYPE").value;
     }
 
     private _consumeUsingClause(): UsingAttribute[] {
-        const usingToken = this._consumeTokenType(TokenType.KEYWORD);
+        const usingToken = this._consumeTokenType("KEYWORD");
         if (usingToken.value !== "USING") {
             throw new PQLError("Expected using clause");
         }
@@ -68,8 +68,8 @@ export class Parser {
         while (true) {
             const attribute = this._consumeUsingAttribute();
             attributes.push(attribute);
-            if (this._currentToken.type === TokenType.COMMA) {
-                this._consumeTokenType(TokenType.COMMA);
+            if (this._currentToken.type === "COMMA") {
+                this._consumeTokenType("COMMA");
             } else {
                 break;
             }
@@ -82,32 +82,32 @@ export class Parser {
         if (this._currentToken.value !== "WHERE") {
             return undefined;
         }
-        this._consumeTokenType(TokenType.KEYWORD);
-        const column = this._consumeTokenType(TokenType.IDENTIFIER).value;
-        const comparisonOperator = this._consumeTokenType(TokenType.COMPARISON_OPERATOR).value;
+        this._consumeTokenType("KEYWORD");
+        const column = this._consumeTokenType("IDENTIFIER").value;
+        const comparisonOperator = this._consumeTokenType("COMPARISON_OPERATOR").value;
 
         let value;
         switch (comparisonOperator) {
             case ">":
-                value = Number(this._consumeTokenType(TokenType.NUMBER).value);
+                value = Number(this._consumeTokenType("NUMBER").value);
                 return { gt: { column, value } };
             case ">=":
-                value = Number(this._consumeTokenType(TokenType.NUMBER).value);
+                value = Number(this._consumeTokenType("NUMBER").value);
                 return { gte: { column, value } };
             case "<":
-                value = Number(this._consumeTokenType(TokenType.NUMBER).value);
+                value = Number(this._consumeTokenType("NUMBER").value);
                 return { lt: { column, value } };
             case "<=":
-                value = Number(this._consumeTokenType(TokenType.NUMBER).value);
+                value = Number(this._consumeTokenType("NUMBER").value);
                 return { lte: { column, value } };
             case "=":
                 const token = this._consumeToken();
                 switch (token.type) {
-                    case TokenType.STRING:
+                    case "STRING":
                         return { eq: { column, value: token.value  } };
-                    case TokenType.NUMBER:
+                    case "NUMBER":
                         return { eq: { column, value: Number(token.value) } };
-                    case TokenType.NULL:
+                    case "NULL":
                         return { eq: { column, value: null } };
                     default:
                         throw new PQLError("Equal comparison allowed only for string, number, and null");
@@ -121,31 +121,31 @@ export class Parser {
         if (this._currentToken.value !== "GROUPBY") {
             return undefined;
         }
-        this._consumeTokenType(TokenType.KEYWORD);
-        return this._consumeTokenType(TokenType.IDENTIFIER).value;
+        this._consumeTokenType("KEYWORD");
+        return this._consumeTokenType("IDENTIFIER").value;
     }
 
     private _consumeUsingAttribute(): UsingAttribute {
-        let column = undefined;
-        let aggregationFunction = undefined;
+        let column: string | undefined = undefined;
+        let aggregationFunction: AggregationFunction | undefined = undefined;
 
-        if (this._currentToken.type === TokenType.AGGREGATION_FUNCTION) {
-            aggregationFunction = this._consumeTokenType(TokenType.AGGREGATION_FUNCTION).value;
-            this._consumeTokenType(TokenType.LPAREN);
-            if (this._currentToken.type.valueOf() === TokenType.IDENTIFIER.valueOf()) {
-                column = this._consumeTokenType(TokenType.IDENTIFIER).value;
+        if (this._currentToken.type === "AGGREGATION_FUNCTION") {
+            aggregationFunction = <AggregationFunction>this._consumeTokenType("AGGREGATION_FUNCTION").value;
+            this._consumeTokenType("LPAREN");
+            if (this._currentToken.type.valueOf() === "IDENTIFIER".valueOf()) {
+                column = this._consumeTokenType("IDENTIFIER").value;
             } else if (aggregationFunction !== "COUNT") {
                 throw new PQLError(`Missing identifier in aggregation function ${aggregationFunction}`);
             }
-            this._consumeTokenType(TokenType.RPAREN);
+            this._consumeTokenType("RPAREN");
         } else {
-            column = this._consumeTokenType(TokenType.IDENTIFIER).value;
+            column = this._consumeTokenType("IDENTIFIER").value;
         }
 
         let displayName = undefined;
         if (this._currentToken.value === "AS") {
-            this._consumeTokenType(TokenType.KEYWORD);
-            displayName = this._consumeTokenType(TokenType.IDENTIFIER).value;
+            this._consumeTokenType("KEYWORD");
+            displayName = this._consumeTokenType("IDENTIFIER").value;
         }
 
         return { column, displayName, aggregationFunction }

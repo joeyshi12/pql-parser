@@ -1,3 +1,3 @@
-export declare class PQLParsingError extends Error {
+export declare class PQLError extends Error {
     constructor(message: string);
 }

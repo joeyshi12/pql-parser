@@ -1,23 +1,12 @@
-export declare enum TokenType {
-    KEYWORD = 0,
-    IDENTIFIER = 1,
-    PLOT_TYPE = 2,
-    LPAREN = 3,
-    RPAREN = 4,
-    COMMA = 5,
-    STRING = 6,
-    NUMBER = 7,
-    NULL = 8,
-    COMPARISON_OPERATOR = 9,
-    AGGREGATION_FUNCTION = 10,
-    EOF = 11
-}
+export type TokenType = "KEYWORD" | "IDENTIFIER" | "PLOT_TYPE" | "LPAREN" | "RPAREN" | "COMMA" | "STRING" | "NUMBER" | "NULL" | "COMPARISON_OPERATOR" | "AGGREGATION_FUNCTION" | "EOF";
+export type PlotType = "BAR" | "LINE" | "SCATTER";
+export type AggregationFunction = "AVG" | "SUM" | "COUNT";
 export interface Token {
     type: TokenType;
     value: string;
 }
 export interface PQLSyntaxTree {
-    plotType: string;
+    plotType: PlotType;
     usingAttributes: UsingAttribute[];
     whereFilter?: WhereFilter;
     groupByColumn?: string;
@@ -25,7 +14,7 @@ export interface PQLSyntaxTree {
 export interface UsingAttribute {
     column?: string;
     displayName?: string;
-    aggregationFunction?: string;
+    aggregationFunction?: AggregationFunction;
 }
 export interface WhereFilter {
 }
@@ -64,4 +53,23 @@ export interface EqualFilter extends WhereFilter {
         column: string;
         value: string | number | null;
     };
+}
+export interface ColumnData<T> {
+    name: string;
+    values: T[];
+}
+export interface RowData {
+    [key: string]: Primitive;
+}
+export type Primitive = string | number;
+export interface PlotConfig {
+    containerWidth: number;
+    containerHeight: number;
+    margin: PlotMargin;
+}
+export interface PlotMargin {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
 }
