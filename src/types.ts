@@ -70,6 +70,11 @@ export interface EqualFilter extends WhereFilter {
     eq: { column: string, value: string | number | null };
 }
 
+export interface Point {
+    x: Primitive;
+    y: Primitive;
+}
+
 export interface ColumnData<T> {
     name: string;
     values: T[];
