@@ -1,6 +1,8 @@
-import { AggregationFunction, PQLSyntaxTree, PlotType, Token, TokenType, UsingAttribute, WhereFilter } from './types';
+import { AggregationFunction, PlotType, Token, TokenType, UsingAttribute } from './types';
 import { Lexer } from './lexer';
 import { PQLError } from './exceptions';
+import { EqualFilter, GreaterThanFilter, GreaterThanOrEqualFilter, LessThanFilter, LessThanOrEqualFilter, WhereFilter } from './filters';
+import { PQLStatement } from './pqlStatement';
 
 /**
  * Parser for Plot Query Language (PQL) queries
@@ -16,33 +18,27 @@ export class Parser {
 
    /**
     * Parses the PQL query into a syntax tree
-    * @returns The syntax tree representing the parsed PQL query
+    * @returns PQL statement of the parsed PQL query
     */
-    public parse(): PQLSyntaxTree {
+    public parse(): PQLStatement {
         const plotType = this._consumePlotClause();
         const usingAttributes = this._consumeUsingClause();
         const whereFilter = this._consumeWhereClauseOptional();
         const groupByColumn = this._consumeGroupByClauseOptional();
         this._consumeTokenType("EOF");
-        const syntaxTree: PQLSyntaxTree = {
-            plotType,
-            usingAttributes,
-            whereFilter,
-            groupByColumn
-        };
-        this._validateSyntaxTree(syntaxTree);
-        return syntaxTree;
+        this._validateAttributes(usingAttributes, groupByColumn);
+        return new PQLStatement(plotType, usingAttributes, whereFilter, groupByColumn);
     }
 
-    private _validateSyntaxTree(syntaxTree: PQLSyntaxTree) {
-        if (syntaxTree.groupByColumn) {
-            syntaxTree.usingAttributes.forEach(attribute => {
-                if (!attribute.aggregationFunction && attribute.column !== syntaxTree.groupByColumn) {
+    private _validateAttributes(attributes: UsingAttribute[], groupByColumn?: string) {
+        if (groupByColumn) {
+            attributes.forEach(attribute => {
+                if (!attribute.aggregationFunction && attribute.column !== groupByColumn) {
                     throw new PQLError(`Invalid column ${attribute.column} - aggregation queries can only have aggregated or group by columns`);
                 }
             });
         } else {
-            syntaxTree.usingAttributes.forEach(attribute => {
+            attributes.forEach(attribute => {
                 if (attribute.aggregationFunction) {
                     throw new PQLError(`Cannot include aggregated column ${attribute.aggregationFunction}(${attribute.column}) without a group by clause`);
                 }
@@ -90,25 +86,25 @@ export class Parser {
         switch (comparisonOperator) {
             case ">":
                 value = Number(this._consumeTokenType("NUMBER").value);
-                return { gt: { column, value } };
+                return new GreaterThanFilter(column, value);
             case ">=":
                 value = Number(this._consumeTokenType("NUMBER").value);
-                return { gte: { column, value } };
+                return new GreaterThanOrEqualFilter(column, value);
             case "<":
                 value = Number(this._consumeTokenType("NUMBER").value);
-                return { lt: { column, value } };
+                return new LessThanFilter(column, value);
             case "<=":
                 value = Number(this._consumeTokenType("NUMBER").value);
-                return { lte: { column, value } };
+                return new LessThanOrEqualFilter(column, value);
             case "=":
                 const token = this._consumeToken();
                 switch (token.type) {
                     case "STRING":
-                        return { eq: { column, value: token.value  } };
+                        return new EqualFilter(column, token.value);
                     case "NUMBER":
-                        return { eq: { column, value: Number(token.value) } };
+                        return new EqualFilter(column, Number(token.value));
                     case "NULL":
-                        return { eq: { column, value: null } };
+                        return new EqualFilter(column, null);
                     default:
                         throw new PQLError("Equal comparison allowed only for string, number, and null");
                 }

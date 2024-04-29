@@ -1,4 +1,5 @@
-import { Lexer, Token, TokenType } from '../src';
+import { Lexer } from '../src/lexer';
+import { Token } from '../src/types';
 
 test("basic plot statement", () => {
     const input = "PLOT BAR USING xcol, ycol";
