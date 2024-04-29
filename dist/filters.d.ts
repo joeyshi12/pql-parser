@@ -1,43 +1,43 @@
 import { Primitive } from "d3-array";
 import { RowData } from "./types";
-export declare abstract class WhereFilter {
-    abstract satisfy(row: RowData): boolean;
+export interface WhereFilter {
+    satisfy(row: RowData): boolean;
 }
-export declare class AndFilter extends WhereFilter {
+export declare class AndFilter implements WhereFilter {
     readonly filters: WhereFilter[];
     constructor(filters: WhereFilter[]);
     satisfy(row: RowData): boolean;
 }
-export declare class OrFilter extends WhereFilter {
+export declare class OrFilter implements WhereFilter {
     readonly filters: WhereFilter[];
     constructor(filters: WhereFilter[]);
     satisfy(row: RowData): boolean;
 }
-export declare class GreaterThanFilter extends WhereFilter {
+export declare class GreaterThanFilter implements WhereFilter {
     readonly column: string;
     readonly compareValue: number;
     constructor(column: string, compareValue: number);
     satisfy(row: RowData): boolean;
 }
-export declare class GreaterThanOrEqualFilter extends WhereFilter {
+export declare class GreaterThanOrEqualFilter implements WhereFilter {
     readonly column: string;
     readonly compareValue: number;
     constructor(column: string, compareValue: number);
     satisfy(row: RowData): boolean;
 }
-export declare class LessThanFilter extends WhereFilter {
+export declare class LessThanFilter implements WhereFilter {
     readonly column: string;
     readonly compareValue: number;
     constructor(column: string, compareValue: number);
     satisfy(row: RowData): boolean;
 }
-export declare class LessThanOrEqualFilter extends WhereFilter {
+export declare class LessThanOrEqualFilter implements WhereFilter {
     readonly column: string;
     readonly compareValue: number;
     constructor(column: string, compareValue: number);
     satisfy(row: RowData): boolean;
 }
-export declare class EqualFilter extends WhereFilter {
+export declare class EqualFilter implements WhereFilter {
     readonly column: string;
     readonly compareValue: Primitive | null;
     constructor(column: string, compareValue: Primitive | null);

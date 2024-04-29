@@ -1,13 +1,12 @@
 import { Primitive } from "d3-array";
 import { RowData } from "./types";
 
-export abstract class WhereFilter {
-    public abstract satisfy(row: RowData): boolean;
+export interface WhereFilter {
+    satisfy(row: RowData): boolean;
 }
 
-export class AndFilter extends WhereFilter {
+export class AndFilter implements WhereFilter {
     constructor(public readonly filters: WhereFilter[]) {
-        super();
     }
 
     public satisfy(row: RowData): boolean {
@@ -15,9 +14,8 @@ export class AndFilter extends WhereFilter {
     }
 }
 
-export class OrFilter extends WhereFilter {
+export class OrFilter implements WhereFilter {
     constructor(public readonly filters: WhereFilter[]) {
-        super();
     }
 
     public satisfy(row: RowData): boolean {
@@ -25,10 +23,9 @@ export class OrFilter extends WhereFilter {
     }
 }
 
-export class GreaterThanFilter extends WhereFilter {
+export class GreaterThanFilter implements WhereFilter {
     constructor(public readonly column: string,
                 public readonly compareValue: number) {
-        super();
     }
 
     public satisfy(row: RowData): boolean {
@@ -40,10 +37,9 @@ export class GreaterThanFilter extends WhereFilter {
     }
 }
 
-export class GreaterThanOrEqualFilter extends WhereFilter {
+export class GreaterThanOrEqualFilter implements WhereFilter {
     constructor(public readonly column: string,
                 public readonly compareValue: number) {
-        super();
     }
 
     public satisfy(row: RowData): boolean {
@@ -55,10 +51,9 @@ export class GreaterThanOrEqualFilter extends WhereFilter {
     }
 }
 
-export class LessThanFilter extends WhereFilter {
+export class LessThanFilter implements WhereFilter {
     constructor(public readonly column: string,
                 public readonly compareValue: number) {
-        super();
     }
 
     public satisfy(row: RowData): boolean {
@@ -70,10 +65,9 @@ export class LessThanFilter extends WhereFilter {
     }
 }
 
-export class LessThanOrEqualFilter extends WhereFilter {
+export class LessThanOrEqualFilter implements WhereFilter {
     constructor(public readonly column: string,
                 public readonly compareValue: number) {
-        super();
     }
 
     public satisfy(row: RowData): boolean {
@@ -85,10 +79,9 @@ export class LessThanOrEqualFilter extends WhereFilter {
     }
 }
 
-export class EqualFilter extends WhereFilter {
+export class EqualFilter implements WhereFilter {
     constructor(public readonly column: string,
                 public readonly compareValue: Primitive | null) {
-        super();
     }
 
     public satisfy(row: RowData): boolean {

@@ -1,12 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EqualFilter = exports.LessThanOrEqualFilter = exports.LessThanFilter = exports.GreaterThanOrEqualFilter = exports.GreaterThanFilter = exports.OrFilter = exports.AndFilter = exports.WhereFilter = void 0;
-class WhereFilter {
-}
-exports.WhereFilter = WhereFilter;
-class AndFilter extends WhereFilter {
+exports.EqualFilter = exports.LessThanOrEqualFilter = exports.LessThanFilter = exports.GreaterThanOrEqualFilter = exports.GreaterThanFilter = exports.OrFilter = exports.AndFilter = void 0;
+class AndFilter {
     constructor(filters) {
-        super();
         this.filters = filters;
     }
     satisfy(row) {
@@ -14,9 +10,8 @@ class AndFilter extends WhereFilter {
     }
 }
 exports.AndFilter = AndFilter;
-class OrFilter extends WhereFilter {
+class OrFilter {
     constructor(filters) {
-        super();
         this.filters = filters;
     }
     satisfy(row) {
@@ -24,9 +19,8 @@ class OrFilter extends WhereFilter {
     }
 }
 exports.OrFilter = OrFilter;
-class GreaterThanFilter extends WhereFilter {
+class GreaterThanFilter {
     constructor(column, compareValue) {
-        super();
         this.column = column;
         this.compareValue = compareValue;
     }
@@ -39,9 +33,8 @@ class GreaterThanFilter extends WhereFilter {
     }
 }
 exports.GreaterThanFilter = GreaterThanFilter;
-class GreaterThanOrEqualFilter extends WhereFilter {
+class GreaterThanOrEqualFilter {
     constructor(column, compareValue) {
-        super();
         this.column = column;
         this.compareValue = compareValue;
     }
@@ -54,9 +47,8 @@ class GreaterThanOrEqualFilter extends WhereFilter {
     }
 }
 exports.GreaterThanOrEqualFilter = GreaterThanOrEqualFilter;
-class LessThanFilter extends WhereFilter {
+class LessThanFilter {
     constructor(column, compareValue) {
-        super();
         this.column = column;
         this.compareValue = compareValue;
     }
@@ -69,9 +61,8 @@ class LessThanFilter extends WhereFilter {
     }
 }
 exports.LessThanFilter = LessThanFilter;
-class LessThanOrEqualFilter extends WhereFilter {
+class LessThanOrEqualFilter {
     constructor(column, compareValue) {
-        super();
         this.column = column;
         this.compareValue = compareValue;
     }
@@ -84,9 +75,8 @@ class LessThanOrEqualFilter extends WhereFilter {
     }
 }
 exports.LessThanOrEqualFilter = LessThanOrEqualFilter;
-class EqualFilter extends WhereFilter {
+class EqualFilter {
     constructor(column, compareValue) {
-        super();
         this.column = column;
         this.compareValue = compareValue;
     }
