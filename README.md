@@ -6,7 +6,7 @@
 
 Plot query language parser library.
 
-A simple CSV visualizer tool made with this parser can be found at <a href="https://devtools.joeyshi.xyz/csv_vis">https://devtools.joeyshi.xyz/csv_vis</a>.
+A simple CSV visualizer tool made with this parser is hosted at <a href="https://devtools.joeyshi.xyz/csv_vis">https://devtools.joeyshi.xyz/csv_vis</a>.
 
 ## To Do
 
@@ -25,6 +25,10 @@ USING <x_column> [AS <x_label>], <y_column> [AS <y_label>]
 [GROUP BY <column>]
 [HAVING <condition>]
 ```
+
+- BAR plots expect `x: string` and `y: number`
+- LINE plots expect `x: number` and `y: number`
+- SCATTER plots expect `x: number` and `y: number`
 
 ## EBNF
 
