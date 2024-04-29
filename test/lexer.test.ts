@@ -1,15 +1,16 @@
-import { Lexer, Token, TokenType } from '../src';
+import { Lexer } from '../src/lexer';
+import { Token } from '../src/types';
 
 test("basic plot statement", () => {
     const input = "PLOT BAR USING xcol, ycol";
     const lexer = new Lexer(input);
     const expected = [
-        { type: TokenType.KEYWORD, value: "PLOT" },
-        { type: TokenType.PLOT_TYPE, value: "BAR" },
-        { type: TokenType.KEYWORD, value: "USING" },
-        { type: TokenType.IDENTIFIER, value: "xcol" },
-        { type: TokenType.COMMA, value: "," },
-        { type: TokenType.IDENTIFIER, value: "ycol" },
+        { type: "KEYWORD", value: "PLOT" },
+        { type: "PLOT_TYPE", value: "BAR" },
+        { type: "KEYWORD", value: "USING" },
+        { type: "IDENTIFIER", value: "xcol" },
+        { type: "COMMA", value: "," },
+        { type: "IDENTIFIER", value: "ycol" },
     ]
     const actual = getTokens(lexer)
     expect(actual).toEqual(expected)
@@ -19,16 +20,16 @@ test("plot statement with named attributes", () => {
     const input = "PLOT BAR USING xcol AS x, ycol AS y";
     const lexer = new Lexer(input);
     const expected = [
-        { type: TokenType.KEYWORD, value: "PLOT" },
-        { type: TokenType.PLOT_TYPE, value: "BAR" },
-        { type: TokenType.KEYWORD, value: "USING" },
-        { type: TokenType.IDENTIFIER, value: "xcol" },
-        { type: TokenType.KEYWORD, value: "AS" },
-        { type: TokenType.IDENTIFIER, value: "x" },
-        { type: TokenType.COMMA, value: "," },
-        { type: TokenType.IDENTIFIER, value: "ycol" },
-        { type: TokenType.KEYWORD, value: "AS" },
-        { type: TokenType.IDENTIFIER, value: "y" },
+        { type: "KEYWORD", value: "PLOT" },
+        { type: "PLOT_TYPE", value: "BAR" },
+        { type: "KEYWORD", value: "USING" },
+        { type: "IDENTIFIER", value: "xcol" },
+        { type: "KEYWORD", value: "AS" },
+        { type: "IDENTIFIER", value: "x" },
+        { type: "COMMA", value: "," },
+        { type: "IDENTIFIER", value: "ycol" },
+        { type: "KEYWORD", value: "AS" },
+        { type: "IDENTIFIER", value: "y" },
     ]
     const actual = getTokens(lexer)
     expect(actual).toEqual(expected)
@@ -38,16 +39,16 @@ test("plot statement with string where clause", () => {
     const input = "PLOT BAR USING xcol, ycol WHERE zcol = 'on'";
     const lexer = new Lexer(input);
     const expected = [
-        { type: TokenType.KEYWORD, value: "PLOT" },
-        { type: TokenType.PLOT_TYPE, value: "BAR" },
-        { type: TokenType.KEYWORD, value: "USING" },
-        { type: TokenType.IDENTIFIER, value: "xcol" },
-        { type: TokenType.COMMA, value: "," },
-        { type: TokenType.IDENTIFIER, value: "ycol" },
-        { type: TokenType.KEYWORD, value: "WHERE" },
-        { type: TokenType.IDENTIFIER, value: "zcol" },
-        { type: TokenType.COMPARISON_OPERATOR, value: "=" },
-        { type: TokenType.STRING, value: "on" },
+        { type: "KEYWORD", value: "PLOT" },
+        { type: "PLOT_TYPE", value: "BAR" },
+        { type: "KEYWORD", value: "USING" },
+        { type: "IDENTIFIER", value: "xcol" },
+        { type: "COMMA", value: "," },
+        { type: "IDENTIFIER", value: "ycol" },
+        { type: "KEYWORD", value: "WHERE" },
+        { type: "IDENTIFIER", value: "zcol" },
+        { type: "COMPARISON_OPERATOR", value: "=" },
+        { type: "STRING", value: "on" },
     ]
     const actual = getTokens(lexer)
     expect(actual).toEqual(expected)
@@ -57,16 +58,16 @@ test("plot statement with greater than where clause", () => {
     const input = "PLOT BAR USING xcol, ycol WHERE zcol > 0";
     const lexer = new Lexer(input);
     const expected = [
-        { type: TokenType.KEYWORD, value: "PLOT" },
-        { type: TokenType.PLOT_TYPE, value: "BAR" },
-        { type: TokenType.KEYWORD, value: "USING" },
-        { type: TokenType.IDENTIFIER, value: "xcol" },
-        { type: TokenType.COMMA, value: "," },
-        { type: TokenType.IDENTIFIER, value: "ycol" },
-        { type: TokenType.KEYWORD, value: "WHERE" },
-        { type: TokenType.IDENTIFIER, value: "zcol" },
-        { type: TokenType.COMPARISON_OPERATOR, value: ">" },
-        { type: TokenType.NUMBER, value: "0" },
+        { type: "KEYWORD", value: "PLOT" },
+        { type: "PLOT_TYPE", value: "BAR" },
+        { type: "KEYWORD", value: "USING" },
+        { type: "IDENTIFIER", value: "xcol" },
+        { type: "COMMA", value: "," },
+        { type: "IDENTIFIER", value: "ycol" },
+        { type: "KEYWORD", value: "WHERE" },
+        { type: "IDENTIFIER", value: "zcol" },
+        { type: "COMPARISON_OPERATOR", value: ">" },
+        { type: "NUMBER", value: "0" },
     ]
     const actual = getTokens(lexer)
     expect(actual).toEqual(expected)
@@ -76,16 +77,16 @@ test("plot statement with less than or equal where clause", () => {
     const input = "PLOT BAR USING xcol, ycol WHERE zcol <= 123";
     const lexer = new Lexer(input);
     const expected = [
-        { type: TokenType.KEYWORD, value: "PLOT" },
-        { type: TokenType.PLOT_TYPE, value: "BAR" },
-        { type: TokenType.KEYWORD, value: "USING" },
-        { type: TokenType.IDENTIFIER, value: "xcol" },
-        { type: TokenType.COMMA, value: "," },
-        { type: TokenType.IDENTIFIER, value: "ycol" },
-        { type: TokenType.KEYWORD, value: "WHERE" },
-        { type: TokenType.IDENTIFIER, value: "zcol" },
-        { type: TokenType.COMPARISON_OPERATOR, value: "<=" },
-        { type: TokenType.NUMBER, value: "123" },
+        { type: "KEYWORD", value: "PLOT" },
+        { type: "PLOT_TYPE", value: "BAR" },
+        { type: "KEYWORD", value: "USING" },
+        { type: "IDENTIFIER", value: "xcol" },
+        { type: "COMMA", value: "," },
+        { type: "IDENTIFIER", value: "ycol" },
+        { type: "KEYWORD", value: "WHERE" },
+        { type: "IDENTIFIER", value: "zcol" },
+        { type: "COMPARISON_OPERATOR", value: "<=" },
+        { type: "NUMBER", value: "123" },
     ]
     const actual = getTokens(lexer)
     expect(actual).toEqual(expected)
@@ -95,17 +96,17 @@ test("plot statement with groupby clause", () => {
     const input = "PLOT BAR USING xcol, AVG(ycol) GROUPBY xcol";
     const lexer = new Lexer(input);
     const expected = [
-        { type: TokenType.KEYWORD, value: "PLOT" },
-        { type: TokenType.PLOT_TYPE, value: "BAR" },
-        { type: TokenType.KEYWORD, value: "USING" },
-        { type: TokenType.IDENTIFIER, value: "xcol" },
-        { type: TokenType.COMMA, value: "," },
-        { type: TokenType.AGGREGATION_FUNCTION, value: "AVG" },
-        { type: TokenType.LPAREN, value: "(" },
-        { type: TokenType.IDENTIFIER, value: "ycol" },
-        { type: TokenType.RPAREN, value: ")" },
-        { type: TokenType.KEYWORD, value: "GROUPBY" },
-        { type: TokenType.IDENTIFIER, value: "xcol" }
+        { type: "KEYWORD", value: "PLOT" },
+        { type: "PLOT_TYPE", value: "BAR" },
+        { type: "KEYWORD", value: "USING" },
+        { type: "IDENTIFIER", value: "xcol" },
+        { type: "COMMA", value: "," },
+        { type: "AGGREGATION_FUNCTION", value: "AVG" },
+        { type: "LPAREN", value: "(" },
+        { type: "IDENTIFIER", value: "ycol" },
+        { type: "RPAREN", value: ")" },
+        { type: "KEYWORD", value: "GROUPBY" },
+        { type: "IDENTIFIER", value: "xcol" }
     ]
     const actual = getTokens(lexer)
     expect(actual).toEqual(expected)

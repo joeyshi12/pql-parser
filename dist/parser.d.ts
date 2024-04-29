@@ -1,5 +1,5 @@
-import { PQLSyntaxTree } from './types';
 import { Lexer } from './lexer';
+import { PQLStatement } from './pqlStatement';
 /**
  * Parser for Plot Query Language (PQL) queries
  */
@@ -9,10 +9,10 @@ export declare class Parser {
     constructor(lexer: Lexer);
     /**
      * Parses the PQL query into a syntax tree
-     * @returns The syntax tree representing the parsed PQL query
+     * @returns PQL statement of the parsed PQL query
      */
-    parse(): PQLSyntaxTree;
-    private _validateSyntaxTree;
+    parse(): PQLStatement;
+    private _validateAttributes;
     private _consumePlotClause;
     private _consumeUsingClause;
     private _consumeWhereClauseOptional;

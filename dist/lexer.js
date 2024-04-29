@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Lexer = void 0;
 const exceptions_1 = require("./exceptions");
-const types_1 = require("./types");
 /**
  * Lexer for tokenizing Plot Query Language (PQL) queries
  */
@@ -42,44 +41,44 @@ class Lexer {
                 continue;
             }
             if (this._isDigit(this._currentChar)) {
-                return { type: types_1.TokenType.NUMBER, value: this._readNumber() };
+                return { type: "NUMBER", value: this._readNumber() };
             }
             switch (this._currentChar) {
                 case "'":
                     this._advance();
-                    return { type: types_1.TokenType.STRING, value: this._readString() };
+                    return { type: "STRING", value: this._readString() };
                 case ",":
                     this._advance();
-                    return { type: types_1.TokenType.COMMA, value: "," };
+                    return { type: "COMMA", value: "," };
                 case "(":
                     this._advance();
-                    return { type: types_1.TokenType.LPAREN, value: "(" };
+                    return { type: "LPAREN", value: "(" };
                 case ")":
                     this._advance();
-                    return { type: types_1.TokenType.RPAREN, value: ")" };
+                    return { type: "RPAREN", value: ")" };
                 case ">":
                     if (this.peek() === "=") {
                         this._advance();
                         this._advance();
-                        return { type: types_1.TokenType.COMPARISON_OPERATOR, value: ">=" };
+                        return { type: "COMPARISON_OPERATOR", value: ">=" };
                     }
                     else {
                         this._advance();
-                        return { type: types_1.TokenType.COMPARISON_OPERATOR, value: ">" };
+                        return { type: "COMPARISON_OPERATOR", value: ">" };
                     }
                 case "<":
                     if (this.peek() === "=") {
                         this._advance();
                         this._advance();
-                        return { type: types_1.TokenType.COMPARISON_OPERATOR, value: "<=" };
+                        return { type: "COMPARISON_OPERATOR", value: "<=" };
                     }
                     else {
                         this._advance();
-                        return { type: types_1.TokenType.COMPARISON_OPERATOR, value: "<" };
+                        return { type: "COMPARISON_OPERATOR", value: "<" };
                     }
                 case "=":
                     this._advance();
-                    return { type: types_1.TokenType.COMPARISON_OPERATOR, value: "=" };
+                    return { type: "COMPARISON_OPERATOR", value: "=" };
                 default:
             }
             if (this._isAlphabetic(this._currentChar)) {
@@ -93,34 +92,34 @@ class Lexer {
                     case "OR":
                     case "GROUPBY":
                         if (!this._currentChar || this._currentChar === " ") {
-                            return { type: types_1.TokenType.KEYWORD, value: identifier.toUpperCase() };
+                            return { type: "KEYWORD", value: identifier.toUpperCase() };
                         }
                     case "BAR":
                     case "LINE":
                     case "SCATTER":
                         if (!this._currentChar || this._currentChar === " ") {
-                            return { type: types_1.TokenType.PLOT_TYPE, value: identifier.toUpperCase() };
+                            return { type: "PLOT_TYPE", value: identifier.toUpperCase() };
                         }
                     case "AVG":
                     case "COUNT":
                     case "SUM":
                         if (/[\s(]/.test(this._currentChar)) {
-                            return { type: types_1.TokenType.AGGREGATION_FUNCTION, value: identifier.toUpperCase() };
+                            return { type: "AGGREGATION_FUNCTION", value: identifier.toUpperCase() };
                         }
                     case "NULL":
                         if (!this._currentChar || this._currentChar === " ") {
-                            return { type: types_1.TokenType.NULL, value: identifier.toUpperCase() };
+                            return { type: "NULL", value: identifier.toUpperCase() };
                         }
                     default:
                         // TODO: simplify this
                         if (!this._currentChar || /[\s,)]/.test(this._currentChar)) {
-                            return { type: types_1.TokenType.IDENTIFIER, value: identifier };
+                            return { type: "IDENTIFIER", value: identifier };
                         }
                 }
             }
-            throw new exceptions_1.PQLParsingError("Invalid character");
+            throw new exceptions_1.PQLError("Invalid character");
         }
-        return { type: types_1.TokenType.EOF, value: "" };
+        return { type: "EOF", value: "" };
     }
     _advance() {
         this._position++;
@@ -149,7 +148,7 @@ class Lexer {
         let result = "";
         while (this._currentChar !== "'") {
             if (!this._currentChar) {
-                throw new exceptions_1.PQLParsingError("Unterminated string");
+                throw new exceptions_1.PQLError("Unterminated string");
             }
             result += this._currentChar;
             this._advance();
