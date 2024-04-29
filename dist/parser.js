@@ -117,11 +117,8 @@ class Parser {
         if (this._currentToken.type === "AGGREGATION_FUNCTION") {
             aggregationFunction = this._consumeTokenType("AGGREGATION_FUNCTION").value;
             this._consumeTokenType("LPAREN");
-            if (this._currentToken.type.valueOf() === "IDENTIFIER".valueOf()) {
+            if (aggregationFunction !== "COUNT") {
                 column = this._consumeTokenType("IDENTIFIER").value;
-            }
-            else if (aggregationFunction !== "COUNT") {
-                throw new exceptions_1.PQLError(`Missing identifier in aggregation function ${aggregationFunction}`);
             }
             this._consumeTokenType("RPAREN");
         }

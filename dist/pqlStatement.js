@@ -105,6 +105,9 @@ function getLabel(attribute) {
     if (attribute.displayName) {
         return attribute.displayName;
     }
+    if (attribute.aggregationFunction === "COUNT") {
+        return "COUNT()";
+    }
     if (attribute.aggregationFunction) {
         return `${attribute.aggregationFunction}(${attribute.column})`;
     }
