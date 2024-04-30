@@ -59,7 +59,7 @@ class PQLStatement {
     _createPlot(points, config) {
         switch (this.plotType) {
             case "BAR":
-                const barChartPoints = points.map(point => ({ x: Number(point.x), y: String(point.y) }));
+                let barChartPoints = points.map(point => ({ x: Number(point.x), y: String(point.y) }));
                 const categorySet = new Set();
                 for (let point of barChartPoints) {
                     if (categorySet.has(point.y)) {
@@ -68,15 +68,16 @@ class PQLStatement {
                     categorySet.add(point.y);
                 }
                 barChartPoints.sort((p1, p2) => p2.x - p1.x);
+                barChartPoints = this._slicePoints(barChartPoints);
                 barChartPoints.reverse();
-                return (0, plots_1.barChart)(this._slicePoints(barChartPoints), config);
+                return (0, plots_1.barChart)(barChartPoints, config);
             case "LINE":
                 const lineChartPoints = points.map(point => ({ x: Number(point.x), y: Number(point.y) }));
-                lineChartPoints.sort((p1, p2) => p2.x - p1.x);
+                lineChartPoints.sort((p1, p2) => p1.x - p2.x);
                 return (0, plots_1.lineChart)(this._slicePoints(lineChartPoints), config);
             case "SCATTER":
                 const scatterPlotPoints = points.map(point => ({ x: Number(point.x), y: Number(point.y) }));
-                scatterPlotPoints.sort((p1, p2) => p2.x - p1.x);
+                scatterPlotPoints.sort((p1, p2) => p1.x - p2.x);
                 return (0, plots_1.scatterPlot)(this._slicePoints(scatterPlotPoints), config);
             default:
                 throw new exceptions_1.PQLError(`Invalid plot type ${this.plotType}`);

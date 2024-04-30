@@ -63,7 +63,7 @@ export class PQLStatement {
     private _createPlot(points: Point<Primitive, Primitive>[], config: PlotConfig): SVGSVGElement {
         switch (this.plotType) {
             case "BAR":
-                const barChartPoints: Point<number, string>[] = points.map(point => ({ x: Number(point.x), y: String(point.y) }))
+                let barChartPoints: Point<number, string>[] = points.map(point => ({ x: Number(point.x), y: String(point.y) }))
                 const categorySet: Set<string> = new Set();
                 for (let point of barChartPoints) {
                     if (categorySet.has(point.y)) {
@@ -72,15 +72,16 @@ export class PQLStatement {
                     categorySet.add(point.y);
                 }
                 barChartPoints.sort((p1, p2) => p2.x - p1.x);
+                barChartPoints = this._slicePoints(barChartPoints);
                 barChartPoints.reverse();
-                return barChart(this._slicePoints(barChartPoints), config);
+                return barChart(barChartPoints, config);
             case "LINE":
                 const lineChartPoints: Point<number, number>[] = points.map(point => ({ x: Number(point.x), y: Number(point.y) }));
-                lineChartPoints.sort((p1, p2) => p2.x - p1.x);
+                lineChartPoints.sort((p1, p2) => p1.x - p2.x);
                 return lineChart(this._slicePoints(lineChartPoints), config);
             case "SCATTER":
                 const scatterPlotPoints: Point<number, number>[] = points.map(point => ({ x: Number(point.x), y: Number(point.y) }));
-                scatterPlotPoints.sort((p1, p2) => p2.x - p1.x);
+                scatterPlotPoints.sort((p1, p2) => p1.x - p2.x);
                 return scatterPlot(this._slicePoints(scatterPlotPoints), config);
             default:
                 throw new PQLError(`Invalid plot type ${this.plotType}`);
