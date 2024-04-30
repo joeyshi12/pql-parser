@@ -74,6 +74,18 @@ test("plot statement with empty count aggregation", () => {
     expect(statement.groupByColumn).toBe("xcol");
 })
 
+test("plot statement with limit and offset", () => {
+    const input = "PLOT SCATTER USING xcol, COUNT() GROUPBY xcol LIMIT 1 OFFSET 2";
+    const statement = new Parser(new Lexer(input)).parse();
+    expect(statement.plotType).toBe("SCATTER");
+    expect(statement.usingAttributes).toEqual([
+        { column: "xcol" },
+        { aggregationFunction: "COUNT" },
+    ]);
+    expect(statement.groupByColumn).toBe("xcol");
+    expect(statement.limitAndOffset).toEqual({ limit: 1, offset: 2 });
+})
+
 test("regular query with invalid column", () => {
     const input = "PLOT BAR USING xcol, AVG(ycol)";
     const parser = new Parser(new Lexer(input));

@@ -17,6 +17,7 @@ export declare class Parser {
     private _consumeUsingClause;
     private _consumeWhereClauseOptional;
     private _consumeGroupByClauseOptional;
+    private _consumeLimitAndOffsetClauseOptional;
     private _consumeUsingAttribute;
     private _consumeToken;
     private _consumeTokenType;

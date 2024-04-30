@@ -59,8 +59,8 @@ export function barChart(points: Point<number, string>[], config: PlotConfig): S
         .append("rect")
         .attr("fill", "steelblue")
         .attr("x", 0)
-        .attr("y", (p: any) => p.y)
-        .attr("width", (p: any) => p.x)
+        .attr("y", (p: Point<number, string>) => yScale(p.y)!)
+        .attr("width", (p: Point<number, string>) => p.x)
         .attr("height", yScale.bandwidth())
 
     return svg.node()!;
@@ -157,7 +157,7 @@ export function scatterPlot(points: Point<number, number>[], config: PlotConfig)
         .append("circle")
         .attr("cx", (p: any) => xScale(p.x))
         .attr("cy", (p: any) => yScale(p.y))
-        .attr("r", 5)
+        .attr("r", 4)
         .attr("fill", "steelblue");
 
     plotArea.append("g")

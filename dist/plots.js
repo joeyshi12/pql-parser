@@ -74,7 +74,7 @@ function barChart(points, config) {
         .append("rect")
         .attr("fill", "steelblue")
         .attr("x", 0)
-        .attr("y", (p) => p.y)
+        .attr("y", (p) => yScale(p.y))
         .attr("width", (p) => p.x)
         .attr("height", yScale.bandwidth());
     return svg.node();
@@ -153,7 +153,7 @@ function scatterPlot(points, config) {
         .append("circle")
         .attr("cx", (p) => xScale(p.x))
         .attr("cy", (p) => yScale(p.y))
-        .attr("r", 5)
+        .attr("r", 4)
         .attr("fill", "steelblue");
     plotArea.append("g")
         .attr("transform", `translate(0,${height})`)

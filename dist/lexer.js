@@ -91,6 +91,8 @@ class Lexer {
                     case "AND":
                     case "OR":
                     case "GROUPBY":
+                    case "LIMIT":
+                    case "OFFSET":
                         if (!this._currentChar || this._currentChar === " ") {
                             return { type: "KEYWORD", value: identifier.toUpperCase() };
                         }

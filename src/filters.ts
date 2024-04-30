@@ -1,5 +1,4 @@
-import { Primitive } from "d3-array";
-import { RowData } from "./types";
+import { RowData, Primitive } from "./types";
 
 export interface WhereFilter {
     satisfy(row: RowData): boolean;

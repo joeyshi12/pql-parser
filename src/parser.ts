@@ -1,4 +1,4 @@
-import { AggregationFunction, PlotType, Token, TokenType, UsingAttribute } from './types';
+import { AggregationFunction, LimitAndOffset, PlotType, Token, TokenType, UsingAttribute } from './types';
 import { Lexer } from './lexer';
 import { PQLError } from './exceptions';
 import { EqualFilter, GreaterThanFilter, GreaterThanOrEqualFilter, LessThanFilter, LessThanOrEqualFilter, WhereFilter } from './filters';
@@ -25,9 +25,10 @@ export class Parser {
         const usingAttributes = this._consumeUsingClause();
         const whereFilter = this._consumeWhereClauseOptional();
         const groupByColumn = this._consumeGroupByClauseOptional();
+        const limitAndOffset = this._consumeLimitAndOffsetClauseOptional();
         this._consumeTokenType("EOF");
         this._validateAttributes(usingAttributes, groupByColumn);
-        return new PQLStatement(plotType, usingAttributes, whereFilter, groupByColumn);
+        return new PQLStatement(plotType, usingAttributes, whereFilter, groupByColumn, limitAndOffset);
     }
 
     private _validateAttributes(attributes: UsingAttribute[], groupByColumn?: string) {
@@ -119,6 +120,20 @@ export class Parser {
         }
         this._consumeTokenType("KEYWORD");
         return this._consumeTokenType("IDENTIFIER").value;
+    }
+
+    private _consumeLimitAndOffsetClauseOptional(): LimitAndOffset | undefined {
+        if (this._currentToken.value !== "LIMIT") {
+            return undefined;
+        }
+        this._consumeTokenType("KEYWORD");
+        const limit = Number(this._consumeTokenType("NUMBER").value);
+        if (this._currentToken.value.valueOf() !== "OFFSET") {
+            return { limit, offset: 0 };
+        }
+        this._consumeTokenType("KEYWORD");
+        const offset = Number(this._consumeTokenType("NUMBER").value);
+        return { limit, offset };
     }
 
     private _consumeUsingAttribute(): UsingAttribute {

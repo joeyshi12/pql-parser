@@ -6,11 +6,12 @@ const plots_1 = require("./plots");
 const lexer_1 = require("./lexer");
 const parser_1 = require("./parser");
 class PQLStatement {
-    constructor(plotType, usingAttributes, whereFilter, groupByColumn) {
+    constructor(plotType, usingAttributes, whereFilter, groupByColumn, limitAndOffset) {
         this.plotType = plotType;
         this.usingAttributes = usingAttributes;
         this.whereFilter = whereFilter;
         this.groupByColumn = groupByColumn;
+        this.limitAndOffset = limitAndOffset;
     }
     static create(query) {
         return new parser_1.Parser(new lexer_1.Lexer(query)).parse();
@@ -20,7 +21,10 @@ class PQLStatement {
             throw new exceptions_1.PQLError("Queries must have 2 attributes");
         }
         const filteredData = this.whereFilter ? data.filter(row => { var _a; return (_a = this.whereFilter) === null || _a === void 0 ? void 0 : _a.satisfy(row); }) : data;
-        const points = this._processData(filteredData);
+        let points = this._processData(filteredData);
+        if (this.limitAndOffset) {
+            points = points.slice(this.limitAndOffset.offset, this.limitAndOffset.offset + this.limitAndOffset.limit);
+        }
         if (!config.xLabel) {
             config.xLabel = getLabel(this.usingAttributes[0]);
         }
@@ -59,7 +63,6 @@ class PQLStatement {
         switch (this.plotType) {
             case "BAR":
                 points.sort((p1, p2) => Number(p2.x) - Number(p1.x));
-                points = points.slice(0, 20);
                 points.reverse();
                 const barChartPoints = points.map(point => ({ x: Number(point.x), y: String(point.y) }));
                 return (0, plots_1.barChart)(barChartPoints, config);

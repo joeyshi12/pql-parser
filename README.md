@@ -15,6 +15,7 @@ A simple CSV visualizer tool made with this parser is hosted at <a href="https:/
 - [x] GROUP BY
 - [ ] HAVING
 - [x] Semantic validation for AST
+- [x] LIMIT and OFFSET clause
 
 ## Syntax
 
@@ -24,6 +25,7 @@ USING <x_column> [AS <x_label>], <y_column> [AS <y_label>]
 [WHERE <condition>]
 [GROUP BY <column>]
 [HAVING <condition>]
+[LIMIT <limit> [OFFSET <offset>]]
 ```
 
 - BAR plots expect `x: string` and `y: number`
@@ -33,7 +35,7 @@ USING <x_column> [AS <x_label>], <y_column> [AS <y_label>]
 ## EBNF
 
 ```
-<plot_statement> ::= "PLOT" <plot_type> <using_clause> [<where_clause>] [<group_by_clause>] [<having_clause>]
+<plot_statement> ::= "PLOT" <plot_type> <using_clause> [<where_clause>] [<group_by_clause>] [<having_clause>] [<limit_and_offset_clause>]
 
 <plot_type> ::= "BAR" | "LINE" | "SCATTER"
 
@@ -44,6 +46,8 @@ USING <x_column> [AS <x_label>], <y_column> [AS <y_label>]
 <group_by_clause> ::= "GROUP BY" <identifier>
 
 <having_clause> ::= "HAVING" <having_condition>
+
+<limit_and_offset_clause> ::= "LIMIT" <number> ["OFFSET" <number>]
 
 <boolean_operator> ::= "OR" | "AND"
 

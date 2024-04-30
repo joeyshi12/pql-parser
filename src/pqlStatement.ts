@@ -1,5 +1,5 @@
 import { PQLError } from "./exceptions";
-import { PlotConfig, PlotType, Point, Primitive, RowData, UsingAttribute } from "./types";
+import { LimitAndOffset, PlotConfig, PlotType, Point, Primitive, RowData, UsingAttribute } from "./types";
 import { barChart, lineChart, scatterPlot } from "./plots";
 import { Lexer } from "./lexer";
 import { Parser } from "./parser";
@@ -9,7 +9,8 @@ export class PQLStatement {
     constructor(public readonly plotType: PlotType,
                 public readonly usingAttributes: UsingAttribute[],
                 public readonly whereFilter?: WhereFilter,
-                public readonly groupByColumn?: string) {
+                public readonly groupByColumn?: string,
+                public readonly limitAndOffset?: LimitAndOffset) {
     }
 
     public static create(query: string) {
@@ -21,7 +22,13 @@ export class PQLStatement {
             throw new PQLError("Queries must have 2 attributes");
         }
         const filteredData = this.whereFilter ? data.filter(row => this.whereFilter?.satisfy(row)) : data;
-        const points = this._processData(filteredData);
+        let points = this._processData(filteredData);
+        if (this.limitAndOffset) {
+            points = points.slice(
+                this.limitAndOffset.offset,
+                this.limitAndOffset.offset + this.limitAndOffset.limit
+            );
+        }
         if (!config.xLabel) {
             config.xLabel = getLabel(this.usingAttributes[0]);
         }
@@ -63,7 +70,6 @@ export class PQLStatement {
         switch (this.plotType) {
             case "BAR":
                 points.sort((p1, p2) => Number(p2.x) - Number(p1.x));
-                points = points.slice(0, 20);
                 points.reverse();
                 const barChartPoints: Point<number, string>[] = points.map(point => ({ x: Number(point.x), y: String(point.y) }))
                 return barChart(barChartPoints, config);

@@ -112,6 +112,30 @@ test("plot statement with groupby clause", () => {
     expect(actual).toEqual(expected)
 })
 
+test("plot statement with limit and offset clause", () => {
+    const input = "PLOT BAR USING xcol, AVG(ycol) GROUPBY xcol LIMIT 1 OFFSET 2";
+    const lexer = new Lexer(input);
+    const expected = [
+        { type: "KEYWORD", value: "PLOT" },
+        { type: "PLOT_TYPE", value: "BAR" },
+        { type: "KEYWORD", value: "USING" },
+        { type: "IDENTIFIER", value: "xcol" },
+        { type: "COMMA", value: "," },
+        { type: "AGGREGATION_FUNCTION", value: "AVG" },
+        { type: "LPAREN", value: "(" },
+        { type: "IDENTIFIER", value: "ycol" },
+        { type: "RPAREN", value: ")" },
+        { type: "KEYWORD", value: "GROUPBY" },
+        { type: "IDENTIFIER", value: "xcol" },
+        { type: "KEYWORD", value: "LIMIT" },
+        { type: "NUMBER", value: "1" },
+        { type: "KEYWORD", value: "OFFSET" },
+        { type: "NUMBER", value: "2" }
+    ]
+    const actual = getTokens(lexer)
+    expect(actual).toEqual(expected)
+})
+
 test("plot statement with invalid alphanumeric token", () => {
     const input = "PLOT-";
     const lexer = new Lexer(input);

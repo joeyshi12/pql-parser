@@ -21,9 +21,10 @@ class Parser {
         const usingAttributes = this._consumeUsingClause();
         const whereFilter = this._consumeWhereClauseOptional();
         const groupByColumn = this._consumeGroupByClauseOptional();
+        const limitAndOffset = this._consumeLimitAndOffsetClauseOptional();
         this._consumeTokenType("EOF");
         this._validateAttributes(usingAttributes, groupByColumn);
-        return new pqlStatement_1.PQLStatement(plotType, usingAttributes, whereFilter, groupByColumn);
+        return new pqlStatement_1.PQLStatement(plotType, usingAttributes, whereFilter, groupByColumn, limitAndOffset);
     }
     _validateAttributes(attributes, groupByColumn) {
         if (groupByColumn) {
@@ -110,6 +111,19 @@ class Parser {
         }
         this._consumeTokenType("KEYWORD");
         return this._consumeTokenType("IDENTIFIER").value;
+    }
+    _consumeLimitAndOffsetClauseOptional() {
+        if (this._currentToken.value !== "LIMIT") {
+            return undefined;
+        }
+        this._consumeTokenType("KEYWORD");
+        const limit = Number(this._consumeTokenType("NUMBER").value);
+        if (this._currentToken.value.valueOf() !== "OFFSET") {
+            return { limit, offset: 0 };
+        }
+        this._consumeTokenType("KEYWORD");
+        const offset = Number(this._consumeTokenType("NUMBER").value);
+        return { limit, offset };
     }
     _consumeUsingAttribute() {
         let column = undefined;

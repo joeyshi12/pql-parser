@@ -33,6 +33,11 @@ export interface UsingAttribute {
     aggregationFunction?: AggregationFunction;
 }
 
+export interface LimitAndOffset {
+    limit: number;
+    offset: number;
+}
+
 export type Primitive = string | number;
 
 export interface Point<PrimitiveX extends Primitive, PrimitiveY extends Primitive> {
