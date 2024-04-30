@@ -64,6 +64,13 @@ export class PQLStatement {
         switch (this.plotType) {
             case "BAR":
                 const barChartPoints: Point<number, string>[] = points.map(point => ({ x: Number(point.x), y: String(point.y) }))
+                const categorySet: Set<string> = new Set();
+                for (let point of barChartPoints) {
+                    if (categorySet.has(point.y)) {
+                        throw new PQLError(`Duplicate bar chart category ${point.y} found in data - use GROUPBY with category column to fix`);
+                    }
+                    categorySet.add(point.y);
+                }
                 barChartPoints.sort((p1, p2) => p2.x - p1.x);
                 barChartPoints.reverse();
                 return barChart(this._slicePoints(barChartPoints), config);

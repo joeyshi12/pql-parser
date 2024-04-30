@@ -75,7 +75,7 @@ function barChart(points, config) {
         .attr("fill", "steelblue")
         .attr("x", 0)
         .attr("y", (p) => yScale(p.y))
-        .attr("width", (p) => p.x)
+        .attr("width", (p) => xScale(p.x))
         .attr("height", yScale.bandwidth());
     return svg.node();
 }

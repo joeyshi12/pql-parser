@@ -60,7 +60,7 @@ export function barChart(points: Point<number, string>[], config: PlotConfig): S
         .attr("fill", "steelblue")
         .attr("x", 0)
         .attr("y", (p: Point<number, string>) => yScale(p.y)!)
-        .attr("width", (p: Point<number, string>) => p.x)
+        .attr("width", (p: Point<number, string>) => xScale(p.x))
         .attr("height", yScale.bandwidth())
 
     return svg.node()!;
