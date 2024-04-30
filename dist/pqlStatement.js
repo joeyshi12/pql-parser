@@ -21,10 +21,7 @@ class PQLStatement {
             throw new exceptions_1.PQLError("Queries must have 2 attributes");
         }
         const filteredData = this.whereFilter ? data.filter(row => { var _a; return (_a = this.whereFilter) === null || _a === void 0 ? void 0 : _a.satisfy(row); }) : data;
-        let points = this._processData(filteredData);
-        if (this.limitAndOffset) {
-            points = points.slice(this.limitAndOffset.offset, this.limitAndOffset.offset + this.limitAndOffset.limit);
-        }
+        const points = this._processData(filteredData);
         if (!config.xLabel) {
             config.xLabel = getLabel(this.usingAttributes[0]);
         }
@@ -62,20 +59,27 @@ class PQLStatement {
     _createPlot(points, config) {
         switch (this.plotType) {
             case "BAR":
-                points.sort((p1, p2) => Number(p2.x) - Number(p1.x));
-                points.reverse();
                 const barChartPoints = points.map(point => ({ x: Number(point.x), y: String(point.y) }));
-                return (0, plots_1.barChart)(barChartPoints, config);
+                barChartPoints.sort((p1, p2) => p2.x - p1.x);
+                barChartPoints.reverse();
+                return (0, plots_1.barChart)(this._slicePoints(barChartPoints), config);
             case "LINE":
-                points.sort((p1, p2) => Number(p2.x) - Number(p1.x));
                 const lineChartPoints = points.map(point => ({ x: Number(point.x), y: Number(point.y) }));
-                return (0, plots_1.lineChart)(lineChartPoints, config);
+                lineChartPoints.sort((p1, p2) => p2.x - p1.x);
+                return (0, plots_1.lineChart)(this._slicePoints(lineChartPoints), config);
             case "SCATTER":
                 const scatterPlotPoints = points.map(point => ({ x: Number(point.x), y: Number(point.y) }));
-                return (0, plots_1.scatterPlot)(scatterPlotPoints, config);
+                scatterPlotPoints.sort((p1, p2) => p2.x - p1.x);
+                return (0, plots_1.scatterPlot)(this._slicePoints(scatterPlotPoints), config);
             default:
                 throw new exceptions_1.PQLError(`Invalid plot type ${this.plotType}`);
         }
+    }
+    _slicePoints(points) {
+        if (!this.limitAndOffset) {
+            return points;
+        }
+        return points.slice(this.limitAndOffset.offset, this.limitAndOffset.offset + this.limitAndOffset.limit);
     }
 }
 exports.PQLStatement = PQLStatement;

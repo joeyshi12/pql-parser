@@ -11,4 +11,5 @@ export declare class PQLStatement {
     execute(data: RowData[], config: PlotConfig): SVGSVGElement;
     private _processData;
     private _createPlot;
+    private _slicePoints;
 }
