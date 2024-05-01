@@ -8,15 +8,6 @@ Plot query language parser library.
 
 A simple CSV visualizer tool made with this parser is hosted at <a href="https://devtools.joeyshi.xyz/csv_vis">https://devtools.joeyshi.xyz/csv_vis</a>.
 
-## To Do
-
-- [x] Docstrings and `types.d.ts`
-- [ ] Nested and chained WHERE clause conditions
-- [x] GROUP BY
-- [ ] HAVING
-- [x] Semantic validation for AST
-- [x] LIMIT and OFFSET clause
-
 ## Syntax
 
 ```
