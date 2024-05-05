@@ -102,6 +102,8 @@ class Lexer {
                         if (!this._currentChar || this._currentChar === " ") {
                             return { type: "PLOT_TYPE", value: identifier.toUpperCase() };
                         }
+                    case "MIN":
+                    case "MAX":
                     case "AVG":
                     case "COUNT":
                     case "SUM":

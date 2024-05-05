@@ -101,6 +101,10 @@ export class PQLStatement {
 
 function computeAggregateValue(data: RowData[], attribute: UsingAttribute, groupByColumn: string) {
     switch (attribute.aggregationFunction) {
+        case "MIN":
+            return columnMin(data, attribute.column!);
+        case "MAX":
+            return columnMax(data, attribute.column!)
         case "AVG":
             return columnSum(data, attribute.column!);
         case "SUM":
@@ -113,6 +117,34 @@ function computeAggregateValue(data: RowData[], attribute: UsingAttribute, group
         return data[0][groupByColumn];
     }
     throw new PQLError(`Invalid attribute ${attribute}`)
+}
+
+function columnMin(data: RowData[], column: string): number {
+    let result = null
+    for (let row of data) {
+        const value = Number(row[column]);
+        if (!isNaN(value) && ((result !== null && value < result) || result === null)) {
+            result = value;
+        }
+    }
+    if (result === null) {
+        throw new PQLError(`Failed to compute MIN of empty column ${column}`)
+    }
+    return result;
+}
+
+function columnMax(data: RowData[], column: string): number {
+    let result = null
+    for (let row of data) {
+        const value = Number(row[column]);
+        if (!isNaN(value) && ((result !== null && value > result) || result === null)) {
+            result = value;
+        }
+    }
+    if (result === null) {
+        throw new PQLError(`Failed to compute MAX of empty column ${column}`)
+    }
+    return result;
 }
 
 function columnSum(data: RowData[], column: string) {

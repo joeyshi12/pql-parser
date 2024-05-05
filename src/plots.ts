@@ -12,11 +12,7 @@ export function barChart(points: Point<number, string>[], config: PlotConfig): S
         .attr("width", config.containerWidth)
         .attr("height", config.containerHeight);
 
-    if (config.xLabel) {
-        svg.append("text")
-            .attr("transform", `translate(${config.containerWidth / 2}, ${config.containerHeight - 10})`)
-            .text(config.xLabel);
-    }
+    insertLabels(svg, config);
 
    const plotArea = svg.append("g")
         .attr("transform", `translate(${config.margin.left},${config.margin.top})`);
@@ -32,35 +28,37 @@ export function barChart(points: Point<number, string>[], config: PlotConfig): S
         .paddingInner(0.1)
         .paddingOuter(0);
 
-    const xAxis = d3Axis.axisBottom(xScale)
-        .tickSize(-width - 10)
+    const tickFormatter = getNumericalTickFormatter(xMax! - xMin!);
+    const xAxis = d3Axis.axisTop(xScale)
+        .tickSize(-height)
         .tickPadding(10)
-        .tickSizeOuter(0);
+        .tickSizeOuter(0)
+        .tickFormat((value) => tickFormatter(value.valueOf()));
 
     const yAxis = d3Axis.axisLeft(yScale)
-        .tickFormat(label => {
-            if (label.length <= 16) {
-                return label;
-            } else {
-                return label.substring(0, 16) + "…";
-            }
-        });
+        .tickFormat(label => truncateLabel(label, 20))
 
     plotArea.append("g")
-        .attr("transform", `translate(0,${height})`)
-        .call(xAxis);
+        .call(xAxis)
+        .call(g => g.selectAll(".tick line")
+              .attr("color", "#ccc"));
 
     plotArea.append("g")
-        .call(yAxis);
+        .attr("transform", `translate(${xScale(0)},0)`)
+        .call(yAxis)
+        .call(g => g.selectAll(".tick text")
+              .filter((_, i) => points[i].x < 0)
+              .attr("text-anchor", "start")
+              .attr("x", 6));
 
     plotArea.selectAll("rect")
         .data(points)
         .enter()
         .append("rect")
-        .attr("fill", "steelblue")
-        .attr("x", 0)
+        .attr("fill", (p: Point<number, string>) => p.x > 0 ? "steelblue" : "orange")
+        .attr("x", (p: Point<number, string>) => xScale(Math.min(p.x, 0)))
         .attr("y", (p: Point<number, string>) => yScale(p.y)!)
-        .attr("width", (p: Point<number, string>) => xScale(p.x))
+        .attr("width", (p: Point<number, string>) => Math.abs(xScale(p.x) - xScale(0)))
         .attr("height", yScale.bandwidth())
 
     return svg.node()!;
@@ -73,17 +71,7 @@ export function lineChart(points: Point<number, number>[], config: PlotConfig): 
         .attr("width", config.containerWidth)
         .attr("height", config.containerHeight);
 
-    if (config.xLabel) {
-        svg.append("text")
-            .attr("transform", `translate(${config.containerWidth / 2}, ${config.containerHeight - 10})`)
-            .text(config.xLabel);
-    }
-
-    if (config.yLabel) {
-        svg.append("text")
-            .attr("transform", `translate(${config.margin.left - 40}, ${config.containerHeight / 2}) rotate(-90)`)
-            .text(config.yLabel);
-    }
+    insertLabels(svg, config);
 
     const plotArea = svg.append("g")
         .attr("transform", `translate(${config.margin.left},${config.margin.top})`);
@@ -109,12 +97,14 @@ export function lineChart(points: Point<number, number>[], config: PlotConfig): 
         .attr("stroke-width", 1.5)
         .attr("d", line);
 
+    const xTickFormatter = getNumericalTickFormatter(xMax! - xMin!);
     plotArea.append("g")
         .attr("transform", `translate(0,${height})`)
-        .call(d3Axis.axisBottom(xScale));
+        .call(d3Axis.axisBottom(xScale).tickFormat((value) => xTickFormatter(value.valueOf())));
 
+    const yTickFormatter = getNumericalTickFormatter(yMax! - yMin!);
     plotArea.append("g")
-        .call(d3Axis.axisLeft(yScale));
+        .call(d3Axis.axisLeft(yScale).tickFormat((value) => yTickFormatter(value.valueOf())));
 
     return svg.node()!;
 }
@@ -126,17 +116,7 @@ export function scatterPlot(points: Point<number, number>[], config: PlotConfig)
         .attr("width", config.containerWidth)
         .attr("height", config.containerHeight);
 
-    if (config.xLabel) {
-        svg.append("text")
-            .attr("transform", `translate(${config.containerWidth / 2}, ${config.containerHeight - 10})`)
-            .text(config.xLabel);
-    }
-
-    if (config.yLabel) {
-        svg.append("text")
-            .attr("transform", `translate(${config.margin.left - 40}, ${config.containerHeight / 2}) rotate(-90)`)
-            .text(config.yLabel);
-    }
+    insertLabels(svg, config);
 
     const plotArea = svg.append("g")
         .attr("transform", `translate(${config.margin.left},${config.margin.top})`);
@@ -160,18 +140,57 @@ export function scatterPlot(points: Point<number, number>[], config: PlotConfig)
         .attr("r", 4)
         .attr("fill", "steelblue");
 
+    const xTickFormatter = getNumericalTickFormatter(xMax! - xMin!);
     plotArea.append("g")
         .attr("transform", `translate(0,${height})`)
-        .call(d3Axis.axisBottom(xScale));
+        .call(d3Axis.axisBottom(xScale).tickFormat((value) => xTickFormatter(value.valueOf())));
 
+    const yTickFormatter = getNumericalTickFormatter(yMax! - yMin!);
     plotArea.append("g")
-        .call(d3Axis.axisLeft(yScale));
+        .call(d3Axis.axisLeft(yScale).tickFormat((value) => yTickFormatter(value.valueOf())));
 
     return svg.node()!;
+}
+
+function getNumericalTickFormatter(domainSize: number) {
+    if (domainSize < 1000) {
+        return (value: number) => value.toString();
+    }
+    if (domainSize < 1000000) {
+        return (value: number) => Math.floor(value / 1000) + "k";
+    }
+    if (domainSize < 1000000000) {
+        return (value: number) => Math.floor(value / 1000000) + "M";
+    }
+    return (value: number) => Math.floor(value / 1000000000) + "B";
+}
+
+function insertLabels(svg: d3Select.Selection<SVGSVGElement, undefined, null, undefined>, config: PlotConfig) {
+    if (config.xLabel) {
+        svg.append("text")
+            .attr("transform", `translate(${config.containerWidth / 2}, 0)`)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "hanging")
+            .text(config.xLabel);
+    }
+    if (config.yLabel) {
+        svg.append("text")
+            .attr("transform", `translate(0, ${config.containerHeight / 2}) rotate(-90)`)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "hanging")
+            .text(config.yLabel);
+    }
 }
 
 function getShape(config: PlotConfig): [number, number] {
     const width = config.containerWidth - config.margin.left - config.margin.right;
     const height = config.containerHeight - config.margin.top - config.margin.bottom;
     return [width, height];
+}
+
+function truncateLabel(label: string, maxLength: number): string {
+    if (label.length <= maxLength) {
+        return label;
+    }
+    return label.substring(0, maxLength) + "…";
 }
