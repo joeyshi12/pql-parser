@@ -48,7 +48,7 @@ USING <x_column> [AS <x_label>], <y_column> [AS <y_label>]
 
 <aggregated_column> ::= <aggregation_function> "(" <identifier> ")" | <identifier>
 
-<aggregation_function> ::= "AVG" | "COUNT" | "SUM"
+<aggregation_function> ::= "MIN" | "MAX" | "AVG" | "COUNT" | "SUM"
 
 <identifier> ::= <alphabetic> { <alphabetic> | <digit> | "_" }
 
