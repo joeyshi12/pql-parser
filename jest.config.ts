@@ -2,6 +2,7 @@ import type {Config} from 'jest';
 
 const config: Config = {
   preset: "ts-jest",
+  testEnvironment: "jsdom",
   // https://stackoverflow.com/questions/69226759/jest-unexpected-token-export-when-using-d3
   moduleNameMapper: {
     '^d3-selection$': '<rootDir>/node_modules/d3-selection/dist/d3-selection.min.js',

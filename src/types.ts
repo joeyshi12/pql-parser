@@ -18,6 +18,8 @@ export type PlotType =
     | "SCATTER";
 
 export type AggregationFunction =
+    | "MIN"
+    | "MAX"
     | "AVG"
     | "SUM"
     | "COUNT"

@@ -1,6 +1,6 @@
 export type TokenType = "KEYWORD" | "IDENTIFIER" | "PLOT_TYPE" | "LPAREN" | "RPAREN" | "COMMA" | "STRING" | "NUMBER" | "NULL" | "COMPARISON_OPERATOR" | "AGGREGATION_FUNCTION" | "EOF";
 export type PlotType = "BAR" | "LINE" | "SCATTER";
-export type AggregationFunction = "AVG" | "SUM" | "COUNT";
+export type AggregationFunction = "MIN" | "MAX" | "AVG" | "SUM" | "COUNT";
 export interface Token {
     type: TokenType;
     value: string;
