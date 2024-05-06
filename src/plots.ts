@@ -14,7 +14,7 @@ export function barChart(points: Point<number, string>[], config: PlotConfig): S
 
     insertLabels(svg, config);
 
-   const plotArea = svg.append("g")
+    const plotArea = svg.append("g")
         .attr("transform", `translate(${config.margin.left},${config.margin.top})`);
 
     const [xMin, xMax] = d3Array.extent(points, p => p.x);
@@ -28,15 +28,14 @@ export function barChart(points: Point<number, string>[], config: PlotConfig): S
         .paddingInner(0.1)
         .paddingOuter(0);
 
-    const tickFormatter = getNumericalTickFormatter(xMax! - xMin!);
     const xAxis = d3Axis.axisTop(xScale)
         .tickSize(-height)
         .tickPadding(10)
         .tickSizeOuter(0)
-        .tickFormat((value) => tickFormatter(value.valueOf()));
+        .tickFormat(unitFormat);
 
     const yAxis = d3Axis.axisLeft(yScale)
-        .tickFormat(label => truncateLabel(label, 20))
+        .tickFormat(label => truncateLabel(label, 16))
 
     plotArea.append("g")
         .call(xAxis)
@@ -97,14 +96,12 @@ export function lineChart(points: Point<number, number>[], config: PlotConfig): 
         .attr("stroke-width", 1.5)
         .attr("d", line);
 
-    const xTickFormatter = getNumericalTickFormatter(xMax! - xMin!);
     plotArea.append("g")
         .attr("transform", `translate(0,${height})`)
-        .call(d3Axis.axisBottom(xScale).tickFormat((value) => xTickFormatter(value.valueOf())));
+        .call(d3Axis.axisBottom(xScale).tickFormat(unitFormat));
 
-    const yTickFormatter = getNumericalTickFormatter(yMax! - yMin!);
     plotArea.append("g")
-        .call(d3Axis.axisLeft(yScale).tickFormat((value) => yTickFormatter(value.valueOf())));
+        .call(d3Axis.axisLeft(yScale).tickFormat(unitFormat));
 
     return svg.node()!;
 }
@@ -140,42 +137,41 @@ export function scatterPlot(points: Point<number, number>[], config: PlotConfig)
         .attr("r", 4)
         .attr("fill", "steelblue");
 
-    const xTickFormatter = getNumericalTickFormatter(xMax! - xMin!);
     plotArea.append("g")
         .attr("transform", `translate(0,${height})`)
-        .call(d3Axis.axisBottom(xScale).tickFormat((value) => xTickFormatter(value.valueOf())));
+        .call(d3Axis.axisBottom(xScale).tickFormat(unitFormat));
 
-    const yTickFormatter = getNumericalTickFormatter(yMax! - yMin!);
     plotArea.append("g")
-        .call(d3Axis.axisLeft(yScale).tickFormat((value) => yTickFormatter(value.valueOf())));
+        .call(d3Axis.axisLeft(yScale).tickFormat(unitFormat));
 
     return svg.node()!;
 }
 
-function getNumericalTickFormatter(domainSize: number) {
-    if (domainSize < 1000) {
-        return (value: number) => value.toString();
+function unitFormat(numberValue: d3Scale.NumberValue): string {
+    const value: number = numberValue.valueOf();
+    if (value > 1000000000) {
+        return Math.floor(value / 1000000000) + "B";
     }
-    if (domainSize < 1000000) {
-        return (value: number) => Math.floor(value / 1000) + "k";
+    if (value > 1000000) {
+        return Math.floor(value / 1000000) + "M";
     }
-    if (domainSize < 1000000000) {
-        return (value: number) => Math.floor(value / 1000000) + "M";
+    if (value > 1000) {
+        return Math.floor(value / 1000) + "k";
     }
-    return (value: number) => Math.floor(value / 1000000000) + "B";
+    return value.toString();
 }
 
 function insertLabels(svg: d3Select.Selection<SVGSVGElement, undefined, null, undefined>, config: PlotConfig) {
     if (config.xLabel) {
         svg.append("text")
-            .attr("transform", `translate(${config.containerWidth / 2}, 0)`)
+            .attr("transform", `translate(${config.containerWidth / 2}, 2)`)
             .attr("text-anchor", "middle")
             .attr("dominant-baseline", "hanging")
             .text(config.xLabel);
     }
     if (config.yLabel) {
         svg.append("text")
-            .attr("transform", `translate(0, ${config.containerHeight / 2}) rotate(-90)`)
+            .attr("transform", `translate(2, ${config.containerHeight / 2}) rotate(-90)`)
             .attr("text-anchor", "middle")
             .attr("dominant-baseline", "hanging")
             .text(config.yLabel);

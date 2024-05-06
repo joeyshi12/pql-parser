@@ -21,4 +21,5 @@ export declare class Parser {
     private _consumeUsingAttribute;
     private _consumeToken;
     private _consumeTokenType;
+    private _consumeComparisonValue;
 }

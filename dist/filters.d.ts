@@ -42,3 +42,9 @@ export declare class EqualFilter implements WhereFilter {
     constructor(column: string, compareValue: Primitive | null);
     satisfy(row: RowData): boolean;
 }
+export declare class NotEqualFilter implements WhereFilter {
+    readonly column: string;
+    readonly compareValue: Primitive | null;
+    constructor(column: string, compareValue: Primitive | null);
+    satisfy(row: RowData): boolean;
+}

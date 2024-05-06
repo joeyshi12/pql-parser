@@ -90,17 +90,9 @@ class Parser {
                 value = Number(this._consumeTokenType("NUMBER").value);
                 return new filters_1.LessThanOrEqualFilter(column, value);
             case "=":
-                const token = this._consumeToken();
-                switch (token.type) {
-                    case "STRING":
-                        return new filters_1.EqualFilter(column, token.value);
-                    case "NUMBER":
-                        return new filters_1.EqualFilter(column, Number(token.value));
-                    case "NULL":
-                        return new filters_1.EqualFilter(column, null);
-                    default:
-                        throw new exceptions_1.PQLError("Equal comparison allowed only for string, number, and null");
-                }
+                return new filters_1.EqualFilter(column, this._consumeComparisonValue());
+            case "!=":
+                return new filters_1.NotEqualFilter(column, this._consumeComparisonValue());
             default:
                 throw new exceptions_1.PQLError(`Invalid comparison operator ${comparisonOperator}`);
         }
@@ -159,6 +151,19 @@ class Parser {
         }
         else {
             throw new exceptions_1.PQLError(`Unexpected token ${JSON.stringify(this._currentToken)} at position ${this._lexer.currentPosition()}`);
+        }
+    }
+    _consumeComparisonValue() {
+        const token = this._consumeToken();
+        switch (token.type) {
+            case "STRING":
+                return token.value;
+            case "NUMBER":
+                return Number(token.value);
+            case "NULL":
+                return null;
+            default:
+                throw new exceptions_1.PQLError("Equal comparison allowed only for string, number, and null");
         }
     }
 }

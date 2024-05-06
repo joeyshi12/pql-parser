@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EqualFilter = exports.LessThanOrEqualFilter = exports.LessThanFilter = exports.GreaterThanOrEqualFilter = exports.GreaterThanFilter = exports.OrFilter = exports.AndFilter = void 0;
+exports.NotEqualFilter = exports.EqualFilter = exports.LessThanOrEqualFilter = exports.LessThanFilter = exports.GreaterThanOrEqualFilter = exports.GreaterThanFilter = exports.OrFilter = exports.AndFilter = void 0;
 class AndFilter {
     constructor(filters) {
         this.filters = filters;
@@ -85,3 +85,13 @@ class EqualFilter {
     }
 }
 exports.EqualFilter = EqualFilter;
+class NotEqualFilter {
+    constructor(column, compareValue) {
+        this.column = column;
+        this.compareValue = compareValue;
+    }
+    satisfy(row) {
+        return row[this.column] !== this.compareValue;
+    }
+}
+exports.NotEqualFilter = NotEqualFilter;

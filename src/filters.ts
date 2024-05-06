@@ -87,3 +87,13 @@ export class EqualFilter implements WhereFilter {
         return row[this.column] === this.compareValue;
     }
 }
+
+export class NotEqualFilter implements WhereFilter {
+    constructor(public readonly column: string,
+                public readonly compareValue: Primitive | null) {
+    }
+
+    public satisfy(row: RowData): boolean {
+        return row[this.column] !== this.compareValue;
+    }
+}

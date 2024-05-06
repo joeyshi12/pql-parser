@@ -46,14 +46,13 @@ function barChart(points, config) {
         .range([height, 0])
         .paddingInner(0.1)
         .paddingOuter(0);
-    const tickFormatter = getNumericalTickFormatter(xMax - xMin);
     const xAxis = d3Axis.axisTop(xScale)
         .tickSize(-height)
         .tickPadding(10)
         .tickSizeOuter(0)
-        .tickFormat((value) => tickFormatter(value.valueOf()));
+        .tickFormat(unitFormat);
     const yAxis = d3Axis.axisLeft(yScale)
-        .tickFormat(label => truncateLabel(label, 20));
+        .tickFormat(label => truncateLabel(label, 16));
     plotArea.append("g")
         .call(xAxis)
         .call(g => g.selectAll(".tick line")
@@ -102,13 +101,11 @@ function lineChart(points, config) {
         .attr("stroke", "steelblue")
         .attr("stroke-width", 1.5)
         .attr("d", line);
-    const xTickFormatter = getNumericalTickFormatter(xMax - xMin);
     plotArea.append("g")
         .attr("transform", `translate(0,${height})`)
-        .call(d3Axis.axisBottom(xScale).tickFormat((value) => xTickFormatter(value.valueOf())));
-    const yTickFormatter = getNumericalTickFormatter(yMax - yMin);
+        .call(d3Axis.axisBottom(xScale).tickFormat(unitFormat));
     plotArea.append("g")
-        .call(d3Axis.axisLeft(yScale).tickFormat((value) => yTickFormatter(value.valueOf())));
+        .call(d3Axis.axisLeft(yScale).tickFormat(unitFormat));
     return svg.node();
 }
 exports.lineChart = lineChart;
@@ -136,39 +133,38 @@ function scatterPlot(points, config) {
         .attr("cy", (p) => yScale(p.y))
         .attr("r", 4)
         .attr("fill", "steelblue");
-    const xTickFormatter = getNumericalTickFormatter(xMax - xMin);
     plotArea.append("g")
         .attr("transform", `translate(0,${height})`)
-        .call(d3Axis.axisBottom(xScale).tickFormat((value) => xTickFormatter(value.valueOf())));
-    const yTickFormatter = getNumericalTickFormatter(yMax - yMin);
+        .call(d3Axis.axisBottom(xScale).tickFormat(unitFormat));
     plotArea.append("g")
-        .call(d3Axis.axisLeft(yScale).tickFormat((value) => yTickFormatter(value.valueOf())));
+        .call(d3Axis.axisLeft(yScale).tickFormat(unitFormat));
     return svg.node();
 }
 exports.scatterPlot = scatterPlot;
-function getNumericalTickFormatter(domainSize) {
-    if (domainSize < 1000) {
-        return (value) => value.toString();
+function unitFormat(numberValue) {
+    const value = numberValue.valueOf();
+    if (value > 1000000000) {
+        return Math.floor(value / 1000000000) + "B";
     }
-    if (domainSize < 1000000) {
-        return (value) => Math.floor(value / 1000) + "k";
+    if (value > 1000000) {
+        return Math.floor(value / 1000000) + "M";
     }
-    if (domainSize < 1000000000) {
-        return (value) => Math.floor(value / 1000000) + "M";
+    if (value > 1000) {
+        return Math.floor(value / 1000) + "k";
     }
-    return (value) => Math.floor(value / 1000000000) + "B";
+    return value.toString();
 }
 function insertLabels(svg, config) {
     if (config.xLabel) {
         svg.append("text")
-            .attr("transform", `translate(${config.containerWidth / 2}, 0)`)
+            .attr("transform", `translate(${config.containerWidth / 2}, 2)`)
             .attr("text-anchor", "middle")
             .attr("dominant-baseline", "hanging")
             .text(config.xLabel);
     }
     if (config.yLabel) {
         svg.append("text")
-            .attr("transform", `translate(0, ${config.containerHeight / 2}) rotate(-90)`)
+            .attr("transform", `translate(2, ${config.containerHeight / 2}) rotate(-90)`)
             .attr("text-anchor", "middle")
             .attr("dominant-baseline", "hanging")
             .text(config.yLabel);

@@ -1,3 +1,4 @@
+import { AndFilter, LessThanFilter } from '../dist';
 import { EqualFilter, GreaterThanFilter } from '../src/filters';
 import { Lexer } from '../src/lexer';
 import { Parser } from '../src/parser';
@@ -50,6 +51,36 @@ test("plot statement with greater than where clause", () => {
     }
     expect(statement.whereFilter.column).toBe("zcol");
     expect(statement.whereFilter.compareValue).toBe(0);
+})
+
+test("plot statement with AND where clause", () => {
+    const input = "PLOT BAR USING xcol, ycol WHERE zcol > 0 AND  zcol < 10";
+    const statement = new Parser(new Lexer(input)).parse();
+    expect(statement.plotType).toBe("BAR");
+    expect(statement.usingAttributes).toEqual([
+        { column: "xcol" },
+        { column: "ycol" },
+    ]);
+
+    if (!statement.whereFilter || !(statement.whereFilter instanceof AndFilter)) {
+        throw new Error(`Invalid where filter type ${statement.whereFilter}`);
+    }
+
+    expect(statement.whereFilter.filters.length).toBe(2);
+
+    if (!(statement.whereFilter.filters[0] instanceof GreaterThanFilter)) {
+        throw new Error(`Invalid where filter type ${statement.whereFilter.filters[0]}`);
+    }
+
+    expect(statement.whereFilter.filters[0].column).toBe("zcol");
+    expect(statement.whereFilter.filters[0].compareValue).toBe(0);
+
+    if (!(statement.whereFilter.filters[1] instanceof LessThanFilter)) {
+        throw new Error(`Invalid where filter type ${statement.whereFilter.filters[0]}`);
+    }
+
+    expect(statement.whereFilter.filters[1].column).toBe("zcol");
+    expect(statement.whereFilter.filters[1].compareValue).toBe(10);
 })
 
 test("plot statement with groupby clause", () => {

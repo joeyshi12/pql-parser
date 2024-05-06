@@ -79,6 +79,12 @@ class Lexer {
                 case "=":
                     this._advance();
                     return { type: "COMPARISON_OPERATOR", value: "=" };
+                case "!":
+                    if (this.peek() === "=") {
+                        this._advance();
+                        this._advance();
+                        return { type: "COMPARISON_OPERATOR", value: "!=" };
+                    }
                 default:
             }
             if (this._isAlphabetic(this._currentChar)) {

@@ -1,7 +1,7 @@
 import { AggregationFunction, LimitAndOffset, PlotType, Token, TokenType, UsingAttribute } from './types';
 import { Lexer } from './lexer';
 import { PQLError } from './exceptions';
-import { EqualFilter, GreaterThanFilter, GreaterThanOrEqualFilter, LessThanFilter, LessThanOrEqualFilter, WhereFilter } from './filters';
+import { EqualFilter, GreaterThanFilter, GreaterThanOrEqualFilter, LessThanFilter, LessThanOrEqualFilter, NotEqualFilter, WhereFilter } from './filters';
 import { PQLStatement } from './pqlStatement';
 
 /**
@@ -98,17 +98,9 @@ export class Parser {
                 value = Number(this._consumeTokenType("NUMBER").value);
                 return new LessThanOrEqualFilter(column, value);
             case "=":
-                const token = this._consumeToken();
-                switch (token.type) {
-                    case "STRING":
-                        return new EqualFilter(column, token.value);
-                    case "NUMBER":
-                        return new EqualFilter(column, Number(token.value));
-                    case "NULL":
-                        return new EqualFilter(column, null);
-                    default:
-                        throw new PQLError("Equal comparison allowed only for string, number, and null");
-                }
+                return new EqualFilter(column, this._consumeComparisonValue());
+            case "!=":
+                return new NotEqualFilter(column, this._consumeComparisonValue());
             default:
                 throw new PQLError(`Invalid comparison operator ${comparisonOperator}`)
         }
@@ -173,6 +165,20 @@ export class Parser {
             return token;
         } else {
             throw new PQLError(`Unexpected token ${JSON.stringify(this._currentToken)} at position ${this._lexer.currentPosition()}`)
+        }
+    }
+
+    private _consumeComparisonValue(): string | number | null {
+        const token = this._consumeToken();
+        switch (token.type) {
+            case "STRING":
+                return token.value;
+            case "NUMBER":
+                return Number(token.value);
+            case "NULL":
+                return null;
+            default:
+                throw new PQLError("Equal comparison allowed only for string, number, and null");
         }
     }
 }
