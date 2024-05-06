@@ -46,24 +46,19 @@ function barChart(points, config) {
         .range([height, 0])
         .paddingInner(0.1)
         .paddingOuter(0);
+    const ticks = xScale.ticks();
+    const tickFormatter = getTickFormatter(ticks[1] - ticks[0]);
     const xAxis = d3Axis.axisTop(xScale)
         .tickSize(-height)
         .tickPadding(10)
         .tickSizeOuter(0)
-        .tickFormat(unitFormat);
+        .tickFormat(tickFormatter);
     const yAxis = d3Axis.axisLeft(yScale)
-        .tickFormat(label => truncateLabel(label, 16));
+        .tickFormat(label => truncateLabel(label, 15));
     plotArea.append("g")
         .call(xAxis)
         .call(g => g.selectAll(".tick line")
         .attr("color", "#ccc"));
-    plotArea.append("g")
-        .attr("transform", `translate(${xScale(0)},0)`)
-        .call(yAxis)
-        .call(g => g.selectAll(".tick text")
-        .filter((_, i) => points[i].x < 0)
-        .attr("text-anchor", "start")
-        .attr("x", 6));
     plotArea.selectAll("rect")
         .data(points)
         .enter()
@@ -73,6 +68,13 @@ function barChart(points, config) {
         .attr("y", (p) => yScale(p.y))
         .attr("width", (p) => Math.abs(xScale(p.x) - xScale(0)))
         .attr("height", yScale.bandwidth());
+    plotArea.append("g")
+        .attr("transform", `translate(${xScale(0)},0)`)
+        .call(yAxis)
+        .call(g => g.selectAll(".tick text")
+        .filter((_, i) => points[i].x < 0)
+        .attr("text-anchor", "start")
+        .attr("x", 6));
     return svg.node();
 }
 exports.barChart = barChart;
@@ -92,6 +94,15 @@ function lineChart(points, config) {
     const yScale = d3Scale.scaleLinear()
         .domain([yMin, yMax])
         .range([height, 0]);
+    const xTicks = xScale.ticks();
+    const xTickFormatter = getTickFormatter(xTicks[1] - xTicks[0]);
+    plotArea.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3Axis.axisBottom(xScale).tickFormat(xTickFormatter));
+    const yTicks = yScale.ticks();
+    const yTickFormatter = getTickFormatter(yTicks[1] - yTicks[0]);
+    plotArea.append("g")
+        .call(d3Axis.axisLeft(yScale).tickFormat(yTickFormatter));
     const line = d3Shape.line()
         .x(p => xScale(p.x))
         .y(p => yScale(p.y));
@@ -101,11 +112,6 @@ function lineChart(points, config) {
         .attr("stroke", "steelblue")
         .attr("stroke-width", 1.5)
         .attr("d", line);
-    plotArea.append("g")
-        .attr("transform", `translate(0,${height})`)
-        .call(d3Axis.axisBottom(xScale).tickFormat(unitFormat));
-    plotArea.append("g")
-        .call(d3Axis.axisLeft(yScale).tickFormat(unitFormat));
     return svg.node();
 }
 exports.lineChart = lineChart;
@@ -133,26 +139,29 @@ function scatterPlot(points, config) {
         .attr("cy", (p) => yScale(p.y))
         .attr("r", 4)
         .attr("fill", "steelblue");
+    const xTicks = xScale.ticks();
+    const xTickFormatter = getTickFormatter(xTicks[1] - xTicks[0]);
     plotArea.append("g")
         .attr("transform", `translate(0,${height})`)
-        .call(d3Axis.axisBottom(xScale).tickFormat(unitFormat));
+        .call(d3Axis.axisBottom(xScale).tickFormat(xTickFormatter));
+    const yTicks = yScale.ticks();
+    const yTickFormatter = getTickFormatter(yTicks[1] - yTicks[0]);
     plotArea.append("g")
-        .call(d3Axis.axisLeft(yScale).tickFormat(unitFormat));
+        .call(d3Axis.axisLeft(yScale).tickFormat(yTickFormatter));
     return svg.node();
 }
 exports.scatterPlot = scatterPlot;
-function unitFormat(numberValue) {
-    const value = numberValue.valueOf();
-    if (value > 1000000000) {
-        return Math.floor(value / 1000000000) + "B";
+function getTickFormatter(intervalSize) {
+    if (intervalSize > 1000000000) {
+        return (numberValue) => Math.floor(numberValue.valueOf() / 1000000000) + "B";
     }
-    if (value > 1000000) {
-        return Math.floor(value / 1000000) + "M";
+    if (intervalSize > 1000000) {
+        return (numberValue) => Math.floor(numberValue.valueOf() / 1000000) + "M";
     }
-    if (value > 1000) {
-        return Math.floor(value / 1000) + "k";
+    if (intervalSize > 1000) {
+        return (numberValue) => Math.floor(numberValue.valueOf() / 1000) + "k";
     }
-    return value.toString();
+    return (numberValue) => numberValue.valueOf().toString();
 }
 function insertLabels(svg, config) {
     if (config.xLabel) {

@@ -106,9 +106,9 @@ function computeAggregateValue(data: RowData[], attribute: UsingAttribute, group
         case "MAX":
             return columnMax(data, attribute.column!)
         case "AVG":
-            return columnSum(data, attribute.column!);
-        case "SUM":
             return columnSum(data, attribute.column!) / data.length;
+        case "SUM":
+            return columnSum(data, attribute.column!);
         case "COUNT":
             return data.length;
         default:
