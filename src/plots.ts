@@ -4,15 +4,33 @@ import * as d3Array from "d3-array";
 import * as d3Axis from "d3-axis";
 import * as d3Shape from "d3-shape";
 import { Point, PlotConfig } from "./types";
+import { PQLError } from "./exceptions";
 
 export function barChart(points: Point<number, string>[], config: PlotConfig): SVGSVGElement {
-    const [width, height] = getShape(config);
+    if (points.length === 0) {
+        throw new PQLError("Failed to create bar chart - no plottable Point<number, string> given")
+    }
 
+    const [width, height] = getShape(config);
     const svg = d3Select.create("svg")
         .attr("width", config.containerWidth)
         .attr("height", config.containerHeight);
 
-    insertLabels(svg, config);
+    if (config.xLabel) {
+        svg.append("text")
+            .attr("transform", `translate(${config.containerWidth / 2}, 2)`)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "hanging")
+            .text(config.xLabel);
+    }
+
+    if (config.yLabel) {
+        svg.append("text")
+            .attr("transform", `translate(2, ${config.containerHeight / 2}) rotate(-90)`)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "hanging")
+            .text(config.yLabel);
+    }
 
     const plotArea = svg.append("g")
         .attr("transform", `translate(${config.margin.left},${config.margin.top})`);
@@ -53,6 +71,7 @@ export function barChart(points: Point<number, string>[], config: PlotConfig): S
         .attr("y", (p: Point<number, string>) => yScale(p.y)!)
         .attr("width", (p: Point<number, string>) => Math.abs(xScale(p.x) - xScale(0)))
         .attr("height", yScale.bandwidth())
+        .attr("opacity", "0.7");
 
     plotArea.append("g")
         .attr("transform", `translate(${xScale(0)},0)`)
@@ -66,13 +85,29 @@ export function barChart(points: Point<number, string>[], config: PlotConfig): S
 }
 
 export function lineChart(points: Point<number, number>[], config: PlotConfig): SVGSVGElement {
-    const [width, height] = getShape(config);
+    if (points.length === 0) {
+        throw new PQLError("Failed to create line chart - no plottable Point<number, number> given")
+    }
 
+    const [width, height] = getShape(config);
     const svg = d3Select.create("svg")
         .attr("width", config.containerWidth)
         .attr("height", config.containerHeight);
 
-    insertLabels(svg, config);
+    if (config.xLabel) {
+        svg.append("text")
+            .attr("transform", `translate(${config.containerWidth / 2}, ${config.containerHeight - 4})`)
+            .attr("text-anchor", "middle")
+            .text(config.xLabel);
+    }
+
+    if (config.yLabel) {
+        svg.append("text")
+            .attr("transform", `translate(2, ${config.containerHeight / 2}) rotate(-90)`)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "hanging")
+            .text(config.yLabel);
+    }
 
     const plotArea = svg.append("g")
         .attr("transform", `translate(${config.margin.left},${config.margin.top})`);
@@ -113,13 +148,29 @@ export function lineChart(points: Point<number, number>[], config: PlotConfig): 
 }
 
 export function scatterPlot(points: Point<number, number>[], config: PlotConfig): SVGSVGElement {
-    const [width, height] = getShape(config);
+    if (points.length === 0) {
+        throw new PQLError("Failed to create scatter plot - no plottable Point<number, number> given")
+    }
 
+    const [width, height] = getShape(config);
     const svg = d3Select.create("svg")
         .attr("width", config.containerWidth)
         .attr("height", config.containerHeight);
 
-    insertLabels(svg, config);
+    if (config.xLabel) {
+        svg.append("text")
+            .attr("transform", `translate(${config.containerWidth / 2}, ${config.containerHeight - 4})`)
+            .attr("text-anchor", "middle")
+            .text(config.xLabel);
+    }
+
+    if (config.yLabel) {
+        svg.append("text")
+            .attr("transform", `translate(2, ${config.containerHeight / 2}) rotate(-90)`)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "hanging")
+            .text(config.yLabel);
+    }
 
     const plotArea = svg.append("g")
         .attr("transform", `translate(${config.margin.left},${config.margin.top})`);
@@ -168,23 +219,6 @@ function getTickFormatter(intervalSize: number): (numberValue: d3Scale.NumberVal
         return (numberValue: d3Scale.NumberValue) => Math.floor(numberValue.valueOf() / 1000) + "k";
     }
     return (numberValue: d3Scale.NumberValue) => numberValue.valueOf().toString();
-}
-
-function insertLabels(svg: d3Select.Selection<SVGSVGElement, undefined, null, undefined>, config: PlotConfig) {
-    if (config.xLabel) {
-        svg.append("text")
-            .attr("transform", `translate(${config.containerWidth / 2}, 2)`)
-            .attr("text-anchor", "middle")
-            .attr("dominant-baseline", "hanging")
-            .text(config.xLabel);
-    }
-    if (config.yLabel) {
-        svg.append("text")
-            .attr("transform", `translate(2, ${config.containerHeight / 2}) rotate(-90)`)
-            .attr("text-anchor", "middle")
-            .attr("dominant-baseline", "hanging")
-            .text(config.yLabel);
-    }
 }
 
 function getShape(config: PlotConfig): [number, number] {

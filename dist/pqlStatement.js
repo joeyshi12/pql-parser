@@ -59,7 +59,9 @@ class PQLStatement {
     _createPlot(points, config) {
         switch (this.plotType) {
             case "BAR":
-                let barChartPoints = points.map(point => ({ x: Number(point.x), y: String(point.y) }));
+                let barChartPoints = points
+                    .map(point => ({ x: Number(point.x), y: String(point.y) }))
+                    .filter(point => !isNaN(point.x));
                 const categorySet = new Set();
                 for (let point of barChartPoints) {
                     if (categorySet.has(point.y)) {
@@ -72,11 +74,15 @@ class PQLStatement {
                 barChartPoints.reverse();
                 return (0, plots_1.barChart)(barChartPoints, config);
             case "LINE":
-                const lineChartPoints = points.map(point => ({ x: Number(point.x), y: Number(point.y) }));
+                const lineChartPoints = points
+                    .map(point => ({ x: Number(point.x), y: Number(point.y) }))
+                    .filter(point => !isNaN(point.x) && !isNaN(point.y));
                 lineChartPoints.sort((p1, p2) => p1.x - p2.x);
                 return (0, plots_1.lineChart)(this._slicePoints(lineChartPoints), config);
             case "SCATTER":
-                const scatterPlotPoints = points.map(point => ({ x: Number(point.x), y: Number(point.y) }));
+                const scatterPlotPoints = points
+                    .map(point => ({ x: Number(point.x), y: Number(point.y) }))
+                    .filter(point => !isNaN(point.x) && !isNaN(point.y));
                 scatterPlotPoints.sort((p1, p2) => p1.x - p2.x);
                 return (0, plots_1.scatterPlot)(this._slicePoints(scatterPlotPoints), config);
             default:

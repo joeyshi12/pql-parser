@@ -63,7 +63,9 @@ export class PQLStatement {
     private _createPlot(points: Point<Primitive, Primitive>[], config: PlotConfig): SVGSVGElement {
         switch (this.plotType) {
             case "BAR":
-                let barChartPoints: Point<number, string>[] = points.map(point => ({ x: Number(point.x), y: String(point.y) }))
+                let barChartPoints: Point<number, string>[] = points
+                    .map(point => ({ x: Number(point.x), y: String(point.y) }))
+                    .filter(point => !isNaN(point.x));
                 const categorySet: Set<string> = new Set();
                 for (let point of barChartPoints) {
                     if (categorySet.has(point.y)) {
@@ -76,11 +78,15 @@ export class PQLStatement {
                 barChartPoints.reverse();
                 return barChart(barChartPoints, config);
             case "LINE":
-                const lineChartPoints: Point<number, number>[] = points.map(point => ({ x: Number(point.x), y: Number(point.y) }));
+                const lineChartPoints: Point<number, number>[] = points
+                    .map(point => ({ x: Number(point.x), y: Number(point.y) }))
+                    .filter(point => !isNaN(point.x) && !isNaN(point.y));
                 lineChartPoints.sort((p1, p2) => p1.x - p2.x);
                 return lineChart(this._slicePoints(lineChartPoints), config);
             case "SCATTER":
-                const scatterPlotPoints: Point<number, number>[] = points.map(point => ({ x: Number(point.x), y: Number(point.y) }));
+                const scatterPlotPoints: Point<number, number>[] = points
+                    .map(point => ({ x: Number(point.x), y: Number(point.y) }))
+                    .filter(point => !isNaN(point.x) && !isNaN(point.y));
                 scatterPlotPoints.sort((p1, p2) => p1.x - p2.x);
                 return scatterPlot(this._slicePoints(scatterPlotPoints), config);
             default:

@@ -29,12 +29,29 @@ const d3Scale = __importStar(require("d3-scale"));
 const d3Array = __importStar(require("d3-array"));
 const d3Axis = __importStar(require("d3-axis"));
 const d3Shape = __importStar(require("d3-shape"));
+const exceptions_1 = require("./exceptions");
 function barChart(points, config) {
+    if (points.length === 0) {
+        throw new exceptions_1.PQLError("Failed to create bar chart - no plottable Point<number, string> given");
+    }
     const [width, height] = getShape(config);
     const svg = d3Select.create("svg")
         .attr("width", config.containerWidth)
         .attr("height", config.containerHeight);
-    insertLabels(svg, config);
+    if (config.xLabel) {
+        svg.append("text")
+            .attr("transform", `translate(${config.containerWidth / 2}, 2)`)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "hanging")
+            .text(config.xLabel);
+    }
+    if (config.yLabel) {
+        svg.append("text")
+            .attr("transform", `translate(2, ${config.containerHeight / 2}) rotate(-90)`)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "hanging")
+            .text(config.yLabel);
+    }
     const plotArea = svg.append("g")
         .attr("transform", `translate(${config.margin.left},${config.margin.top})`);
     const [xMin, xMax] = d3Array.extent(points, p => p.x);
@@ -67,7 +84,8 @@ function barChart(points, config) {
         .attr("x", (p) => xScale(Math.min(p.x, 0)))
         .attr("y", (p) => yScale(p.y))
         .attr("width", (p) => Math.abs(xScale(p.x) - xScale(0)))
-        .attr("height", yScale.bandwidth());
+        .attr("height", yScale.bandwidth())
+        .attr("opacity", "0.7");
     plotArea.append("g")
         .attr("transform", `translate(${xScale(0)},0)`)
         .call(yAxis)
@@ -79,11 +97,26 @@ function barChart(points, config) {
 }
 exports.barChart = barChart;
 function lineChart(points, config) {
+    if (points.length === 0) {
+        throw new exceptions_1.PQLError("Failed to create line chart - no plottable Point<number, number> given");
+    }
     const [width, height] = getShape(config);
     const svg = d3Select.create("svg")
         .attr("width", config.containerWidth)
         .attr("height", config.containerHeight);
-    insertLabels(svg, config);
+    if (config.xLabel) {
+        svg.append("text")
+            .attr("transform", `translate(${config.containerWidth / 2}, ${config.containerHeight - 4})`)
+            .attr("text-anchor", "middle")
+            .text(config.xLabel);
+    }
+    if (config.yLabel) {
+        svg.append("text")
+            .attr("transform", `translate(2, ${config.containerHeight / 2}) rotate(-90)`)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "hanging")
+            .text(config.yLabel);
+    }
     const plotArea = svg.append("g")
         .attr("transform", `translate(${config.margin.left},${config.margin.top})`);
     const [xMin, xMax] = d3Array.extent(points, p => p.x);
@@ -116,11 +149,26 @@ function lineChart(points, config) {
 }
 exports.lineChart = lineChart;
 function scatterPlot(points, config) {
+    if (points.length === 0) {
+        throw new exceptions_1.PQLError("Failed to create scatter plot - no plottable Point<number, number> given");
+    }
     const [width, height] = getShape(config);
     const svg = d3Select.create("svg")
         .attr("width", config.containerWidth)
         .attr("height", config.containerHeight);
-    insertLabels(svg, config);
+    if (config.xLabel) {
+        svg.append("text")
+            .attr("transform", `translate(${config.containerWidth / 2}, ${config.containerHeight - 4})`)
+            .attr("text-anchor", "middle")
+            .text(config.xLabel);
+    }
+    if (config.yLabel) {
+        svg.append("text")
+            .attr("transform", `translate(2, ${config.containerHeight / 2}) rotate(-90)`)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "hanging")
+            .text(config.yLabel);
+    }
     const plotArea = svg.append("g")
         .attr("transform", `translate(${config.margin.left},${config.margin.top})`);
     const [xMin, xMax] = d3Array.extent(points, p => p.x);
@@ -162,22 +210,6 @@ function getTickFormatter(intervalSize) {
         return (numberValue) => Math.floor(numberValue.valueOf() / 1000) + "k";
     }
     return (numberValue) => numberValue.valueOf().toString();
-}
-function insertLabels(svg, config) {
-    if (config.xLabel) {
-        svg.append("text")
-            .attr("transform", `translate(${config.containerWidth / 2}, 2)`)
-            .attr("text-anchor", "middle")
-            .attr("dominant-baseline", "hanging")
-            .text(config.xLabel);
-    }
-    if (config.yLabel) {
-        svg.append("text")
-            .attr("transform", `translate(2, ${config.containerHeight / 2}) rotate(-90)`)
-            .attr("text-anchor", "middle")
-            .attr("dominant-baseline", "hanging")
-            .text(config.yLabel);
-    }
 }
 function getShape(config) {
     const width = config.containerWidth - config.margin.left - config.margin.right;
