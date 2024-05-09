@@ -94,13 +94,16 @@ class Lexer {
                     case "USING":
                     case "AS":
                     case "WHERE":
-                    case "AND":
-                    case "OR":
                     case "GROUPBY":
                     case "LIMIT":
                     case "OFFSET":
                         if (!this._currentChar || this._currentChar === " ") {
                             return { type: "KEYWORD", value: identifier.toUpperCase() };
+                        }
+                    case "AND":
+                    case "OR":
+                        if (!this._currentChar || this._currentChar === " ") {
+                            return { type: "LOGICAL_OPERATOR", value: identifier.toUpperCase() };
                         }
                     case "BAR":
                     case "LINE":
