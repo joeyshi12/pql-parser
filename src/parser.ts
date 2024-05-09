@@ -79,17 +79,17 @@ export class Parser {
             return undefined;
         }
         this._consumeTokenWithType("KEYWORD");
-        return this._consumeWhereCondition();
+        return this._consumeCondition();
     }
 
-    private _consumeWhereCondition(): WhereFilter {
+    private _consumeCondition(): WhereFilter {
         const filters: WhereFilter[] = [];
 
         while (true) {
-            const innerFilters = [this._consumeCondition()];
+            const innerFilters = [this._consumeConditionGroup()];
             while (this._currentToken.value === "AND") {
                 this._consumeTokenWithType("LOGICAL_OPERATOR");
-                innerFilters.push(this._consumeCondition());
+                innerFilters.push(this._consumeConditionGroup());
             }
             const innerFilter = innerFilters.length === 1
                 ? innerFilters[0]
@@ -108,12 +108,12 @@ export class Parser {
         return new OrFilter(filters);
     }
 
-    private _consumeCondition(): WhereFilter {
+    private _consumeConditionGroup(): WhereFilter {
         if (this._currentToken.type === "IDENTIFIER") {
             return this._consumeComparison();
         }
         this._consumeTokenWithType("LPAREN");
-        const condition = this._consumeWhereCondition();
+        const condition = this._consumeCondition();
         this._consumeTokenWithType("RPAREN");
         return condition;
     }

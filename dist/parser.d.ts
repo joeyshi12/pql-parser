@@ -16,8 +16,8 @@ export declare class Parser {
     private _consumePlotClause;
     private _consumeUsingClause;
     private _consumeWhereClauseOptional;
-    private _consumeWhereCondition;
     private _consumeCondition;
+    private _consumeConditionGroup;
     private _consumeComparison;
     private _consumeGroupByClauseOptional;
     private _consumeLimitAndOffsetClauseOptional;
