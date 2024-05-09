@@ -1,7 +1,7 @@
 import { AggregationFunction, LimitAndOffset, PlotType, Token, TokenType, UsingAttribute } from './types';
 import { Lexer } from './lexer';
 import { PQLError } from './exceptions';
-import { EqualFilter, GreaterThanFilter, GreaterThanOrEqualFilter, LessThanFilter, LessThanOrEqualFilter, NotEqualFilter, WhereFilter } from './filters';
+import { AndFilter, EqualFilter, GreaterThanFilter, GreaterThanOrEqualFilter, LessThanFilter, LessThanOrEqualFilter, NotEqualFilter, OrFilter, WhereFilter } from './filters';
 import { PQLStatement } from './pqlStatement';
 
 /**
@@ -26,7 +26,7 @@ export class Parser {
         const whereFilter = this._consumeWhereClauseOptional();
         const groupByColumn = this._consumeGroupByClauseOptional();
         const limitAndOffset = this._consumeLimitAndOffsetClauseOptional();
-        this._consumeTokenType("EOF");
+        this._consumeTokenWithType("EOF");
         this._validateAttributes(usingAttributes, groupByColumn);
         return new PQLStatement(plotType, usingAttributes, whereFilter, groupByColumn, limitAndOffset);
     }
@@ -48,15 +48,15 @@ export class Parser {
     }
 
     private _consumePlotClause(): PlotType {
-        const plotToken = this._consumeTokenType("KEYWORD");
+        const plotToken = this._consumeTokenWithType("KEYWORD");
         if (plotToken.value !== "PLOT") {
             throw new PQLError("Must begin query with PLOT");
         }
-        return <PlotType>this._consumeTokenType("PLOT_TYPE").value;
+        return <PlotType>this._consumeTokenWithType("PLOT_TYPE").value;
     }
 
     private _consumeUsingClause(): UsingAttribute[] {
-        const usingToken = this._consumeTokenType("KEYWORD");
+        const usingToken = this._consumeTokenWithType("KEYWORD");
         if (usingToken.value !== "USING") {
             throw new PQLError("Expected using clause");
         }
@@ -66,7 +66,7 @@ export class Parser {
             const attribute = this._consumeUsingAttribute();
             attributes.push(attribute);
             if (this._currentToken.type === "COMMA") {
-                this._consumeTokenType("COMMA");
+                this._consumeTokenWithType("COMMA");
             } else {
                 break;
             }
@@ -74,28 +74,67 @@ export class Parser {
         return attributes;
     }
 
-    // TODO: handle chained and nested where clauses
     private _consumeWhereClauseOptional(): WhereFilter | undefined {
         if (this._currentToken.value !== "WHERE") {
             return undefined;
         }
-        this._consumeTokenType("KEYWORD");
-        const column = this._consumeTokenType("IDENTIFIER").value;
-        const comparisonOperator = this._consumeTokenType("COMPARISON_OPERATOR").value;
+        this._consumeTokenWithType("KEYWORD");
+        return this._consumeCondition();
+    }
+
+    private _consumeCondition(): WhereFilter {
+        const filters: WhereFilter[] = [];
+
+        while (true) {
+            const innerFilters = [this._consumeConditionGroup()];
+            while (this._currentToken.value === "AND") {
+                this._consumeTokenWithType("LOGICAL_OPERATOR");
+                innerFilters.push(this._consumeConditionGroup());
+            }
+            const innerFilter = innerFilters.length === 1
+                ? innerFilters[0]
+                : new AndFilter(innerFilters);
+            filters.push(innerFilter);
+            if (this._currentToken.value !== "OR") {
+                break;
+            }
+            this._advanceToken();
+        }
+
+        if (filters.length === 1) {
+            return filters[0];
+        }
+
+        return new OrFilter(filters);
+    }
+
+    private _consumeConditionGroup(): WhereFilter {
+        if (this._currentToken.type === "IDENTIFIER") {
+            return this._consumeComparison();
+        }
+        this._consumeTokenWithType("LPAREN");
+        const condition = this._consumeCondition();
+        this._consumeTokenWithType("RPAREN");
+        return condition;
+    }
+
+    private _consumeComparison(): WhereFilter {
+        const column = this._consumeTokenWithType("IDENTIFIER").value;
+        const comparisonOperator = this._consumeTokenWithType("COMPARISON_OPERATOR").value;
 
         let value;
         switch (comparisonOperator) {
             case ">":
-                value = Number(this._consumeTokenType("NUMBER").value);
+                value = Number(this._consumeTokenWithType("NUMBER").value);
                 return new GreaterThanFilter(column, value);
             case ">=":
-                value = Number(this._consumeTokenType("NUMBER").value);
+                value = Number(this._consumeTokenWithType("NUMBER").value);
                 return new GreaterThanOrEqualFilter(column, value);
             case "<":
-                value = Number(this._consumeTokenType("NUMBER").value);
+                value = Number(this._consumeTokenWithType("NUMBER").value);
                 return new LessThanFilter(column, value);
             case "<=":
-                value = Number(this._consumeTokenType("NUMBER").value);
+                value = Number(this._consumeTokenWithType("NUMBER").value);
                 return new LessThanOrEqualFilter(column, value);
             case "=":
                 return new EqualFilter(column, this._consumeComparisonValue());
@@ -110,21 +149,21 @@ export class Parser {
         if (this._currentToken.value !== "GROUPBY") {
             return undefined;
         }
-        this._consumeTokenType("KEYWORD");
-        return this._consumeTokenType("IDENTIFIER").value;
+        this._consumeTokenWithType("KEYWORD");
+        return this._consumeTokenWithType("IDENTIFIER").value;
     }
 
     private _consumeLimitAndOffsetClauseOptional(): LimitAndOffset | undefined {
         if (this._currentToken.value !== "LIMIT") {
             return undefined;
         }
-        this._consumeTokenType("KEYWORD");
-        const limit = Number(this._consumeTokenType("NUMBER").value);
+        this._consumeTokenWithType("KEYWORD");
+        const limit = Number(this._consumeTokenWithType("NUMBER").value);
         if (this._currentToken.value.valueOf() !== "OFFSET") {
             return { limit, offset: 0 };
         }
-        this._consumeTokenType("KEYWORD");
-        const offset = Number(this._consumeTokenType("NUMBER").value);
+        this._consumeTokenWithType("KEYWORD");
+        const offset = Number(this._consumeTokenWithType("NUMBER").value);
         return { limit, offset };
     }
 
@@ -133,32 +172,32 @@ export class Parser {
         let aggregationFunction: AggregationFunction | undefined = undefined;
 
         if (this._currentToken.type === "AGGREGATION_FUNCTION") {
-            aggregationFunction = <AggregationFunction>this._consumeTokenType("AGGREGATION_FUNCTION").value;
-            this._consumeTokenType("LPAREN");
+            aggregationFunction = <AggregationFunction>this._consumeTokenWithType("AGGREGATION_FUNCTION").value;
+            this._consumeTokenWithType("LPAREN");
             if (aggregationFunction !== "COUNT") {
-                column = this._consumeTokenType("IDENTIFIER").value;
+                column = this._consumeTokenWithType("IDENTIFIER").value;
             }
-            this._consumeTokenType("RPAREN");
+            this._consumeTokenWithType("RPAREN");
         } else {
-            column = this._consumeTokenType("IDENTIFIER").value;
+            column = this._consumeTokenWithType("IDENTIFIER").value;
         }
 
         let displayName = undefined;
         if (this._currentToken.value === "AS") {
-            this._consumeTokenType("KEYWORD");
-            displayName = this._consumeTokenType("IDENTIFIER").value;
+            this._consumeTokenWithType("KEYWORD");
+            displayName = this._consumeTokenWithType("IDENTIFIER").value;
         }
 
         return { column, displayName, aggregationFunction }
     }
 
-    private _consumeToken(): Token {
+    private _advanceToken(): Token {
         const token = this._currentToken;
         this._currentToken = this._lexer.nextToken();
         return token;
     }
 
-    private _consumeTokenType(tokenType: TokenType): Token {
+    private _consumeTokenWithType(tokenType: TokenType): Token {
         const token = this._currentToken;
         if (token.type === tokenType) {
             this._currentToken = this._lexer.nextToken();
@@ -169,7 +208,7 @@ export class Parser {
     }
 
     private _consumeComparisonValue(): string | number | null {
-        const token = this._consumeToken();
+        const token = this._advanceToken();
         switch (token.type) {
             case "STRING":
                 return token.value;

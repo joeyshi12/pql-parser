@@ -16,10 +16,13 @@ export declare class Parser {
     private _consumePlotClause;
     private _consumeUsingClause;
     private _consumeWhereClauseOptional;
+    private _consumeCondition;
+    private _consumeConditionGroup;
+    private _consumeComparison;
     private _consumeGroupByClauseOptional;
     private _consumeLimitAndOffsetClauseOptional;
     private _consumeUsingAttribute;
-    private _consumeToken;
-    private _consumeTokenType;
+    private _advanceToken;
+    private _consumeTokenWithType;
     private _consumeComparisonValue;
 }

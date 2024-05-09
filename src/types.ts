@@ -9,6 +9,7 @@ export type TokenType =
     | "NUMBER"
     | "NULL"
     | "COMPARISON_OPERATOR"
+    | "LOGICAL_OPERATOR"
     | "AGGREGATION_FUNCTION"
     | "EOF";
 

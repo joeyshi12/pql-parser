@@ -1,4 +1,4 @@
-import { AndFilter, LessThanFilter } from '../dist';
+import { AndFilter, LessThanFilter, OrFilter } from '../dist';
 import { EqualFilter, GreaterThanFilter } from '../src/filters';
 import { Lexer } from '../src/lexer';
 import { Parser } from '../src/parser';
@@ -31,11 +31,9 @@ test("plot statement with string where clause", () => {
         { column: "xcol" },
         { column: "ycol" },
     ]);
-    if (!statement.whereFilter || !(statement.whereFilter instanceof EqualFilter)) {
-        throw new Error(`Invalid where filter type ${statement.whereFilter}`);
-    }
-    expect(statement.whereFilter.column).toBe("zcol");
-    expect(statement.whereFilter.compareValue).toBe("on");
+    const equalFilter = <EqualFilter>statement.whereFilter;
+    expect(equalFilter.column).toBe("zcol");
+    expect(equalFilter.compareValue).toBe("on");
 })
 
 test("plot statement with greater than where clause", () => {
@@ -46,42 +44,106 @@ test("plot statement with greater than where clause", () => {
         { column: "xcol" },
         { column: "ycol" },
     ]);
-    if (!statement.whereFilter || !(statement.whereFilter instanceof GreaterThanFilter)) {
-        throw new Error(`Invalid where filter type ${statement.whereFilter}`);
-    }
-    expect(statement.whereFilter.column).toBe("zcol");
-    expect(statement.whereFilter.compareValue).toBe(0);
+    const greaterThanFilter = <GreaterThanFilter>statement.whereFilter;
+    expect(greaterThanFilter.column).toBe("zcol");
+    expect(greaterThanFilter.compareValue).toBe(0);
 })
 
-//test("plot statement with AND where clause", () => {
-//    const input = "PLOT BAR USING xcol, ycol WHERE zcol > 0 AND  zcol < 10";
-//    const statement = new Parser(new Lexer(input)).parse();
-//    expect(statement.plotType).toBe("BAR");
-//    expect(statement.usingAttributes).toEqual([
-//        { column: "xcol" },
-//        { column: "ycol" },
-//    ]);
-//
-//    if (!statement.whereFilter || !(statement.whereFilter instanceof AndFilter)) {
-//        throw new Error(`Invalid where filter type ${statement.whereFilter}`);
-//    }
-//
-//    expect(statement.whereFilter.filters.length).toBe(2);
-//
-//    if (!(statement.whereFilter.filters[0] instanceof GreaterThanFilter)) {
-//        throw new Error(`Invalid where filter type ${statement.whereFilter.filters[0]}`);
-//    }
-//
-//    expect(statement.whereFilter.filters[0].column).toBe("zcol");
-//    expect(statement.whereFilter.filters[0].compareValue).toBe(0);
-//
-//    if (!(statement.whereFilter.filters[1] instanceof LessThanFilter)) {
-//        throw new Error(`Invalid where filter type ${statement.whereFilter.filters[0]}`);
-//    }
-//
-//    expect(statement.whereFilter.filters[1].column).toBe("zcol");
-//    expect(statement.whereFilter.filters[1].compareValue).toBe(10);
-//})
+test("plot statement with AND where clause", () => {
+    const input = "PLOT BAR USING xcol, ycol WHERE zcol > 0 AND zcol < 10";
+    const statement = new Parser(new Lexer(input)).parse();
+    expect(statement.plotType).toBe("BAR");
+    expect(statement.usingAttributes).toEqual([
+        { column: "xcol" },
+        { column: "ycol" },
+    ]);
+
+    const andFilter = <AndFilter>statement.whereFilter;
+
+    expect(andFilter.filters.length).toBe(2);
+
+    const greaterThanFilter = <GreaterThanFilter>andFilter.filters[0];
+    expect(greaterThanFilter.column).toBe("zcol");
+    expect(greaterThanFilter.compareValue).toBe(0);
+
+    const lessThanFilter = <LessThanFilter>andFilter.filters[1];
+    expect(lessThanFilter.column).toBe("zcol");
+    expect(lessThanFilter.compareValue).toBe(10);
+})
+
+test("plot statement with OR where clause", () => {
+    const input = "PLOT BAR USING xcol, ycol WHERE zcol > 0 OR zcol < 10";
+    const statement = new Parser(new Lexer(input)).parse();
+    expect(statement.plotType).toBe("BAR");
+    expect(statement.usingAttributes).toEqual([
+        { column: "xcol" },
+        { column: "ycol" },
+    ]);
+
+    const andFilter = <OrFilter>statement.whereFilter;
+
+    expect(andFilter.filters.length).toBe(2);
+
+    const greaterThanFilter = <GreaterThanFilter>andFilter.filters[0];
+    expect(greaterThanFilter.column).toBe("zcol");
+    expect(greaterThanFilter.compareValue).toBe(0);
+
+    const lessThanFilter = <LessThanFilter>andFilter.filters[1];
+    expect(lessThanFilter.column).toBe("zcol");
+    expect(lessThanFilter.compareValue).toBe(10);
+})
+
+test("plot statement with AND and OR conditions", () => {
+    const input = "PLOT BAR USING xcol, ycol WHERE zcol > 0 OR zcol < 10 AND xcol > 0";
+    const statement = new Parser(new Lexer(input)).parse();
+    expect(statement.plotType).toBe("BAR");
+    expect(statement.usingAttributes).toEqual([
+        { column: "xcol" },
+        { column: "ycol" },
+    ]);
+
+    const orFilter = <OrFilter>statement.whereFilter;
+    expect(orFilter.filters.length).toBe(2);
+
+    const greaterThanFilter = <GreaterThanFilter>orFilter.filters[0];
+    expect(greaterThanFilter.column).toBe("zcol");
+    expect(greaterThanFilter.compareValue).toBe(0);
+
+    const andFilter = <AndFilter>orFilter.filters[1];
+    expect(andFilter.filters.length).toBe(2);
+    const filter1 = <LessThanFilter>andFilter.filters[0];
+    expect(filter1.column).toBe("zcol");
+    expect(filter1.compareValue).toBe(10);
+    const filter2 = <GreaterThanFilter>andFilter.filters[1];
+    expect(filter2.column).toBe("xcol");
+    expect(filter2.compareValue).toBe(0);
+})
+
+test("plot statement with WHERE clause with parentheses", () => {
+    const input = "PLOT BAR USING xcol, ycol WHERE (zcol > 0 OR zcol < 10) AND xcol > 0";
+    const statement = new Parser(new Lexer(input)).parse();
+    expect(statement.plotType).toBe("BAR");
+    expect(statement.usingAttributes).toEqual([
+        { column: "xcol" },
+        { column: "ycol" },
+    ]);
+
+    const andFilter = <AndFilter>statement.whereFilter;
+    expect(andFilter.filters.length).toBe(2);
+
+    const orFilter = <OrFilter>andFilter.filters[0];
+    expect(orFilter.filters.length).toBe(2);
+    const filter1 = <GreaterThanFilter>orFilter.filters[0];
+    expect(filter1.column).toBe("zcol");
+    expect(filter1.compareValue).toBe(0);
+    const filter2 = <LessThanFilter>orFilter.filters[1];
+    expect(filter2.column).toBe("zcol");
+    expect(filter2.compareValue).toBe(10);
+
+    const greaterThanFilter = <GreaterThanFilter>andFilter.filters[1];
+    expect(greaterThanFilter.column).toBe("xcol");
+    expect(greaterThanFilter.compareValue).toBe(0);
+})
 
 test("plot statement with groupby clause", () => {
     const input = "PLOT BAR USING xcol, AVG(ycol) GROUPBY xcol";
