@@ -5,7 +5,11 @@ export interface Token {
     type: TokenType;
     value: string;
 }
-export interface UsingAttribute {
+export interface PlotAttributes {
+    plotType: PlotType;
+    attributes: PlotAttribute[];
+}
+export interface PlotAttribute {
     column?: string;
     displayName?: string;
     aggregationFunction?: AggregationFunction;

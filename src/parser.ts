@@ -1,4 +1,4 @@
-import { AggregationFunction, LimitAndOffset, PlotType, Token, TokenType, UsingAttribute } from './types';
+import { AggregationFunction, LimitAndOffset, PlotType, Token, TokenType, PlotColumn, PlotCall } from './types';
 import { Lexer } from './lexer';
 import { PQLError } from './exceptions';
 import { AndFilter, EqualFilter, GreaterThanFilter, GreaterThanOrEqualFilter, LessThanFilter, LessThanOrEqualFilter, NotEqualFilter, OrFilter, WhereFilter } from './filters';
@@ -21,25 +21,24 @@ export class Parser {
     * @returns PQL statement of the parsed PQL query
     */
     public parse(): PQLStatement {
-        const plotType = this._consumePlotClause();
-        const usingAttributes = this._consumeUsingClause();
+        const plotCall = this._consumePlotClause();
         const whereFilter = this._consumeWhereClauseOptional();
         const groupByColumn = this._consumeGroupByClauseOptional();
         const limitAndOffset = this._consumeLimitAndOffsetClauseOptional();
-        this._consumeTokenWithType("EOF");
-        this._validateAttributes(usingAttributes, groupByColumn);
-        return new PQLStatement(plotType, usingAttributes, whereFilter, groupByColumn, limitAndOffset);
+        this._consumeToken("EOF");
+        this._validateAttributes(plotCall, groupByColumn);
+        return new PQLStatement(plotCall, whereFilter, groupByColumn, limitAndOffset);
     }
 
-    private _validateAttributes(attributes: UsingAttribute[], groupByColumn?: string) {
+    private _validateAttributes(plotCall: PlotCall, groupByColumn?: string) {
         if (groupByColumn) {
-            attributes.forEach(attribute => {
+            plotCall.args.forEach(attribute => {
                 if (!attribute.aggregationFunction && attribute.column !== groupByColumn) {
                     throw new PQLError(`Invalid column ${attribute.column} - aggregation queries can only have aggregated or group by columns`);
                 }
             });
         } else {
-            attributes.forEach(attribute => {
+            plotCall.args.forEach((attribute, _) => {
                 if (attribute.aggregationFunction) {
                     throw new PQLError(`Cannot include aggregated column ${attribute.aggregationFunction}(${attribute.column}) without a group by clause`);
                 }
@@ -47,38 +46,69 @@ export class Parser {
         }
     }
 
-    private _consumePlotClause(): PlotType {
-        const plotToken = this._consumeTokenWithType("KEYWORD");
+    private _consumePlotClause(): PlotCall {
+        const plotToken = this._consumeToken("KEYWORD");
         if (plotToken.value !== "PLOT") {
             throw new PQLError("Must begin query with PLOT");
         }
-        return <PlotType>this._consumeTokenWithType("PLOT_TYPE").value;
+        const plotType = <PlotType>this._consumeToken("PLOT_TYPE").value;
+        this._consumeToken("LPAREN");
+        const args: Map<string, PlotColumn> = new Map();
+        switch (plotType) {
+            case "BAR":
+                args.set("labels", this._consumePlotColumn());
+                this._consumeToken("COMMA");
+                args.set("values", this._consumePlotColumn());
+                break;
+            case "LINE":
+            case "SCATTER":
+                args.set("x", this._consumePlotColumn());
+                this._consumeToken("COMMA");
+                args.set("y", this._consumePlotColumn());
+                break;
+            default:
+                throw new PQLError(`Invalid plot type ${plotType}`);
+        }
+        while (this._currentToken.type === "COMMA") {
+            this._consumeToken("COMMA");
+            const identifierToken = this._consumeToken("IDENTIFIER");
+            this._consumeToken("COMPARISON_OPERATOR", "=");
+            const plotColumn = this._consumePlotColumn();
+            args.set(identifierToken.value, plotColumn);
+        }
+        this._consumeToken("RPAREN");
+        return { plotType, args };
     }
 
-    private _consumeUsingClause(): UsingAttribute[] {
-        const usingToken = this._consumeTokenWithType("KEYWORD");
-        if (usingToken.value !== "USING") {
-            throw new PQLError("Expected using clause");
+    private _consumePlotColumn(): PlotColumn {
+        let column: string | undefined = undefined;
+        let aggregationFunction: AggregationFunction | undefined = undefined;
+
+        if (this._currentToken.type === "AGGREGATION_FUNCTION") {
+            aggregationFunction = <AggregationFunction>this._consumeToken("AGGREGATION_FUNCTION").value;
+            this._consumeToken("LPAREN");
+            if (aggregationFunction !== "COUNT") {
+                column = this._consumeToken("IDENTIFIER").value;
+            }
+            this._consumeToken("RPAREN");
+        } else {
+            column = this._consumeToken("IDENTIFIER").value;
         }
 
-        const attributes = [];
-        while (true) {
-            const attribute = this._consumeUsingAttribute();
-            attributes.push(attribute);
-            if (this._currentToken.type === "COMMA") {
-                this._consumeTokenWithType("COMMA");
-            } else {
-                break;
-            }
+        let displayName = undefined;
+        if (this._currentToken.value === "AS") {
+            this._consumeToken("KEYWORD");
+            displayName = this._consumeToken("IDENTIFIER").value;
         }
-        return attributes;
+
+        return { column, displayName, aggregationFunction }
     }
 
     private _consumeWhereClauseOptional(): WhereFilter | undefined {
         if (this._currentToken.value !== "WHERE") {
             return undefined;
         }
-        this._consumeTokenWithType("KEYWORD");
+        this._consumeToken("KEYWORD");
         return this._consumeCondition();
     }
 
@@ -88,7 +118,7 @@ export class Parser {
         while (true) {
             const innerFilters = [this._consumeConditionGroup()];
             while (this._currentToken.value === "AND") {
-                this._consumeTokenWithType("LOGICAL_OPERATOR");
+                this._consumeToken("LOGICAL_OPERATOR");
                 innerFilters.push(this._consumeConditionGroup());
             }
             const innerFilter = innerFilters.length === 1
@@ -112,29 +142,29 @@ export class Parser {
         if (this._currentToken.type === "IDENTIFIER") {
             return this._consumeComparison();
         }
-        this._consumeTokenWithType("LPAREN");
+        this._consumeToken("LPAREN");
         const condition = this._consumeCondition();
-        this._consumeTokenWithType("RPAREN");
+        this._consumeToken("RPAREN");
         return condition;
     }
 
     private _consumeComparison(): WhereFilter {
-        const column = this._consumeTokenWithType("IDENTIFIER").value;
-        const comparisonOperator = this._consumeTokenWithType("COMPARISON_OPERATOR").value;
+        const column = this._consumeToken("IDENTIFIER").value;
+        const comparisonOperator = this._consumeToken("COMPARISON_OPERATOR").value;
 
         let value;
         switch (comparisonOperator) {
             case ">":
-                value = Number(this._consumeTokenWithType("NUMBER").value);
+                value = Number(this._consumeToken("NUMBER").value);
                 return new GreaterThanFilter(column, value);
             case ">=":
-                value = Number(this._consumeTokenWithType("NUMBER").value);
+                value = Number(this._consumeToken("NUMBER").value);
                 return new GreaterThanOrEqualFilter(column, value);
             case "<":
-                value = Number(this._consumeTokenWithType("NUMBER").value);
+                value = Number(this._consumeToken("NUMBER").value);
                 return new LessThanFilter(column, value);
             case "<=":
-                value = Number(this._consumeTokenWithType("NUMBER").value);
+                value = Number(this._consumeToken("NUMBER").value);
                 return new LessThanOrEqualFilter(column, value);
             case "=":
                 return new EqualFilter(column, this._consumeComparisonValue());
@@ -149,46 +179,22 @@ export class Parser {
         if (this._currentToken.value !== "GROUPBY") {
             return undefined;
         }
-        this._consumeTokenWithType("KEYWORD");
-        return this._consumeTokenWithType("IDENTIFIER").value;
+        this._consumeToken("KEYWORD");
+        return this._consumeToken("IDENTIFIER").value;
     }
 
     private _consumeLimitAndOffsetClauseOptional(): LimitAndOffset | undefined {
         if (this._currentToken.value !== "LIMIT") {
             return undefined;
         }
-        this._consumeTokenWithType("KEYWORD");
-        const limit = Number(this._consumeTokenWithType("NUMBER").value);
+        this._consumeToken("KEYWORD");
+        const limit = Number(this._consumeToken("NUMBER").value);
         if (this._currentToken.value.valueOf() !== "OFFSET") {
             return { limit, offset: 0 };
         }
-        this._consumeTokenWithType("KEYWORD");
-        const offset = Number(this._consumeTokenWithType("NUMBER").value);
+        this._consumeToken("KEYWORD");
+        const offset = Number(this._consumeToken("NUMBER").value);
         return { limit, offset };
-    }
-
-    private _consumeUsingAttribute(): UsingAttribute {
-        let column: string | undefined = undefined;
-        let aggregationFunction: AggregationFunction | undefined = undefined;
-
-        if (this._currentToken.type === "AGGREGATION_FUNCTION") {
-            aggregationFunction = <AggregationFunction>this._consumeTokenWithType("AGGREGATION_FUNCTION").value;
-            this._consumeTokenWithType("LPAREN");
-            if (aggregationFunction !== "COUNT") {
-                column = this._consumeTokenWithType("IDENTIFIER").value;
-            }
-            this._consumeTokenWithType("RPAREN");
-        } else {
-            column = this._consumeTokenWithType("IDENTIFIER").value;
-        }
-
-        let displayName = undefined;
-        if (this._currentToken.value === "AS") {
-            this._consumeTokenWithType("KEYWORD");
-            displayName = this._consumeTokenWithType("IDENTIFIER").value;
-        }
-
-        return { column, displayName, aggregationFunction }
     }
 
     private _advanceToken(): Token {
@@ -197,9 +203,9 @@ export class Parser {
         return token;
     }
 
-    private _consumeTokenWithType(tokenType: TokenType): Token {
+    private _consumeToken(tokenType: TokenType, value?: string): Token {
         const token = this._currentToken;
-        if (token.type === tokenType) {
+        if (token.type === tokenType && (!value || token.value === value)) {
             this._currentToken = this._lexer.nextToken();
             return token;
         } else {

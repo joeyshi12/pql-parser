@@ -1,13 +1,12 @@
 import { PQLError } from "./exceptions";
-import { LimitAndOffset, PlotConfig, PlotType, Point, Primitive, RowData, UsingAttribute } from "./types";
+import { LimitAndOffset, PlotConfig, Primitive, RowData, PlotColumn, PlotCall } from "./types";
 import { barChart, lineChart, scatterPlot } from "./plots";
 import { Lexer } from "./lexer";
 import { Parser } from "./parser";
 import { WhereFilter } from "./filters";
 
 export class PQLStatement {
-    constructor(public readonly plotType: PlotType,
-                public readonly usingAttributes: UsingAttribute[],
+    constructor(public readonly plotCall: PlotCall,
                 public readonly whereFilter?: WhereFilter,
                 public readonly groupByColumn?: string,
                 public readonly limitAndOffset?: LimitAndOffset) {
@@ -18,31 +17,21 @@ export class PQLStatement {
     }
 
     public execute(data: RowData[], config: PlotConfig): SVGSVGElement {
-        if (this.usingAttributes.length !== 2) {
-            throw new PQLError("Queries must have 2 attributes");
-        }
         const filteredData = this.whereFilter ? data.filter(row => this.whereFilter?.satisfy(row)) : data;
-        const points = this._processData(filteredData);
-        if (!config.xLabel) {
-            config.xLabel = getLabel(this.usingAttributes[0]);
-        }
-        if (!config.yLabel) {
-            config.yLabel = getLabel(this.usingAttributes[1]);
-        }
-        return this._createPlot(points, config);
+        const columnDataMap = this._processData(filteredData);
+        return this._createPlot(columnDataMap, config);
     }
 
-    private _processData(data: RowData[]): Point<Primitive, Primitive>[] {
-        if (this.usingAttributes.length !== 2) {
-            throw new Error(`Invalid number of attributes ${this.usingAttributes.length}`);
-        }
+    private _processData(data: RowData[]): Map<string, Primitive[]> {
+        const columnDataMap: Map<string, Primitive[]> = new Map();
 
-        const [xAttr, yAttr] = this.usingAttributes;
         if (!this.groupByColumn) {
-            return data.map(row => ({ x: row[xAttr.column!], y: row[yAttr.column!] }))
+            this.plotCall.args.forEach((plotColumn, name) => {
+                columnDataMap.set(name, data.map(row => row[plotColumn.column!]));
+            });
         }
 
-        const groups: Map<Primitive, any[]> = new Map();
+        const groups: Map<Primitive, RowData[]> = new Map();
         data.forEach(row => {
             const groupByValue = row[this.groupByColumn!];
             if (groups.has(groupByValue)) {
@@ -51,19 +40,22 @@ export class PQLStatement {
                 groups.set(groupByValue, [row]);
             }
         });
-        const x: Primitive[] = [];
-        const y: Primitive[] = [];
-        groups.forEach((rows: RowData[], _) => {
-            x.push(computeAggregateValue(rows, xAttr, this.groupByColumn!));
-            y.push(computeAggregateValue(rows, yAttr, this.groupByColumn!));
+
+        this.plotCall.args.forEach((plotColumn, name) => {
+            const values: Primitive[] = [];
+            groups.forEach((rows: RowData[], _) => {
+                values.push(computeAggregateValue(rows, plotColumn, this.groupByColumn!));
+            });
+            columnDataMap.set(name, values);
         });
-        return x.map((x, i) => ({ x: x, y: y[i] }));
+
+        return columnDataMap;
     }
 
-    private _createPlot(points: Point<Primitive, Primitive>[], config: PlotConfig): SVGSVGElement {
-        switch (this.plotType) {
+    private _createPlot(columnDataMap: Map<string, Primitive[]>, config: PlotConfig): SVGSVGElement {
+        switch (this.plotCall.plotType) {
             case "BAR":
-                let barChartPoints: Point<number, string>[] = points
+                let barChartPoints: [number, string][] = columnDataMap
                     .map(point => ({ x: Number(point.x), y: String(point.y) }))
                     .filter(point => !isNaN(point.x));
                 const categorySet: Set<string> = new Set();
@@ -78,21 +70,23 @@ export class PQLStatement {
                 barChartPoints.reverse();
                 return barChart(barChartPoints, config);
             case "LINE":
-                const lineChartPoints: Point<number, number>[] = points
+                const lineChartPoints: Point<number, number>[] = columnDataMap
                     .map(point => ({ x: Number(point.x), y: Number(point.y) }))
                     .filter(point => !isNaN(point.x) && !isNaN(point.y));
                 lineChartPoints.sort((p1, p2) => p1.x - p2.x);
                 return lineChart(this._slicePoints(lineChartPoints), config);
             case "SCATTER":
-                const scatterPlotPoints: Point<number, number>[] = points
+                const scatterPlotPoints: Point<number, number>[] = columnDataMap
                     .map(point => ({ x: Number(point.x), y: Number(point.y) }))
                     .filter(point => !isNaN(point.x) && !isNaN(point.y));
                 scatterPlotPoints.sort((p1, p2) => p1.x - p2.x);
                 return scatterPlot(this._slicePoints(scatterPlotPoints), config);
             default:
-                throw new PQLError(`Invalid plot type ${this.plotType}`);
+                throw new PQLError(`Invalid plot type ${this.plotCall}`);
         }
     }
+
+    private _createBarChart()
 
     private _slicePoints<PrimitiveX extends Primitive, PrimitiveY extends Primitive>(points: Point<PrimitiveX, PrimitiveY>[]): Point<PrimitiveX, PrimitiveY>[] {
         if (!this.limitAndOffset) {
@@ -105,7 +99,7 @@ export class PQLStatement {
     }
 }
 
-function computeAggregateValue(data: RowData[], attribute: UsingAttribute, groupByColumn: string) {
+function computeAggregateValue(data: RowData[], attribute: PlotColumn, groupByColumn: string) {
     switch (attribute.aggregationFunction) {
         case "MIN":
             return columnMin(data, attribute.column!);
@@ -164,7 +158,7 @@ function columnSum(data: RowData[], column: string) {
     return result
 }
 
-function getLabel(attribute: UsingAttribute): string {
+function getLabel(attribute: PlotColumn): string {
     if (attribute.displayName) {
         return attribute.displayName;
     }

@@ -47,7 +47,24 @@ class Parser {
         if (plotToken.value !== "PLOT") {
             throw new exceptions_1.PQLError("Must begin query with PLOT");
         }
-        return this._consumeTokenWithType("PLOT_TYPE").value;
+        const plotType = this._consumeTokenWithType("PLOT_TYPE").value;
+        this._consumeTokenWithType("LPAREN");
+        let attributes = [];
+        switch (plotType) {
+            case "BAR":
+                attributes = [];
+                break;
+            case "LINE":
+                attributes = [];
+                break;
+            case "SCATTER":
+                attributes = [];
+                break;
+            default:
+                throw new exceptions_1.PQLError("adsjkn");
+        }
+        this._consumeTokenWithType("RPAREN");
+        return { plotType, attributes };
     }
     _consumeUsingClause() {
         const usingToken = this._consumeTokenWithType("KEYWORD");
@@ -66,6 +83,27 @@ class Parser {
             }
         }
         return attributes;
+    }
+    _consumeUsingAttribute() {
+        let column = undefined;
+        let aggregationFunction = undefined;
+        if (this._currentToken.type === "AGGREGATION_FUNCTION") {
+            aggregationFunction = this._consumeTokenWithType("AGGREGATION_FUNCTION").value;
+            this._consumeTokenWithType("LPAREN");
+            if (aggregationFunction !== "COUNT") {
+                column = this._consumeTokenWithType("IDENTIFIER").value;
+            }
+            this._consumeTokenWithType("RPAREN");
+        }
+        else {
+            column = this._consumeTokenWithType("IDENTIFIER").value;
+        }
+        let displayName = undefined;
+        if (this._currentToken.value === "AS") {
+            this._consumeTokenWithType("KEYWORD");
+            displayName = this._consumeTokenWithType("IDENTIFIER").value;
+        }
+        return { column, displayName, aggregationFunction };
     }
     _consumeWhereClauseOptional() {
         if (this._currentToken.value !== "WHERE") {
@@ -149,27 +187,6 @@ class Parser {
         this._consumeTokenWithType("KEYWORD");
         const offset = Number(this._consumeTokenWithType("NUMBER").value);
         return { limit, offset };
-    }
-    _consumeUsingAttribute() {
-        let column = undefined;
-        let aggregationFunction = undefined;
-        if (this._currentToken.type === "AGGREGATION_FUNCTION") {
-            aggregationFunction = this._consumeTokenWithType("AGGREGATION_FUNCTION").value;
-            this._consumeTokenWithType("LPAREN");
-            if (aggregationFunction !== "COUNT") {
-                column = this._consumeTokenWithType("IDENTIFIER").value;
-            }
-            this._consumeTokenWithType("RPAREN");
-        }
-        else {
-            column = this._consumeTokenWithType("IDENTIFIER").value;
-        }
-        let displayName = undefined;
-        if (this._currentToken.value === "AS") {
-            this._consumeTokenWithType("KEYWORD");
-            displayName = this._consumeTokenWithType("IDENTIFIER").value;
-        }
-        return { column, displayName, aggregationFunction };
     }
     _advanceToken() {
         const token = this._currentToken;

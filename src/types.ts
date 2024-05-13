@@ -30,7 +30,12 @@ export interface Token {
     value: string;
 }
 
-export interface UsingAttribute {
+export interface PlotCall {
+    plotType: PlotType;
+    args: Map<string, PlotColumn>;
+}
+
+export interface PlotColumn {
     column?: string;
     displayName?: string;
     aggregationFunction?: AggregationFunction;
@@ -42,11 +47,6 @@ export interface LimitAndOffset {
 }
 
 export type Primitive = string | number;
-
-export interface Point<PrimitiveX extends Primitive, PrimitiveY extends Primitive> {
-    x: PrimitiveX;
-    y: PrimitiveY;
-}
 
 export interface RowData {
     [key: string]: Primitive;
