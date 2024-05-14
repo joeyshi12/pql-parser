@@ -6,9 +6,8 @@ const plots_1 = require("./plots");
 const lexer_1 = require("./lexer");
 const parser_1 = require("./parser");
 class PQLStatement {
-    constructor(plotType, usingAttributes, whereFilter, groupByColumn, limitAndOffset) {
-        this.plotType = plotType;
-        this.usingAttributes = usingAttributes;
+    constructor(plotCall, whereFilter, groupByColumn, limitAndOffset) {
+        this.plotCall = plotCall;
         this.whereFilter = whereFilter;
         this.groupByColumn = groupByColumn;
         this.limitAndOffset = limitAndOffset;
@@ -17,29 +16,29 @@ class PQLStatement {
         return new parser_1.Parser(new lexer_1.Lexer(query)).parse();
     }
     execute(data, config) {
-        if (this.usingAttributes.length !== 2) {
-            throw new exceptions_1.PQLError("Queries must have 2 attributes");
-        }
         const filteredData = this.whereFilter ? data.filter(row => { var _a; return (_a = this.whereFilter) === null || _a === void 0 ? void 0 : _a.satisfy(row); }) : data;
-        const points = this._processData(filteredData);
-        if (!config.xLabel) {
-            config.xLabel = getLabel(this.usingAttributes[0]);
+        const columnDataMap = this._processData(filteredData);
+        switch (this.plotCall.plotType) {
+            case "BAR":
+                return this._createBarChart(columnDataMap, config);
+            case "LINE":
+                return this._createXYPlot(columnDataMap, config);
+            case "SCATTER":
+                return this._createXYPlot(columnDataMap, config, true);
+            default:
+                throw new exceptions_1.PQLError(`Invalid plot type ${this.plotCall}`);
         }
-        if (!config.yLabel) {
-            config.yLabel = getLabel(this.usingAttributes[1]);
-        }
-        return this._createPlot(points, config);
     }
     _processData(data) {
-        if (this.usingAttributes.length !== 2) {
-            throw new Error(`Invalid number of attributes ${this.usingAttributes.length}`);
-        }
-        const [xAttr, yAttr] = this.usingAttributes;
+        const columnDataMap = new Map();
         if (!this.groupByColumn) {
-            return data.map(row => ({ x: row[xAttr.column], y: row[yAttr.column] }));
+            this.plotCall.args.forEach((plotColumn, name) => {
+                columnDataMap.set(name, data.map(row => row[plotColumn.column]));
+            });
+            return columnDataMap;
         }
         const groups = new Map();
-        data.forEach(row => {
+        for (let row of data) {
             const groupByValue = row[this.groupByColumn];
             if (groups.has(groupByValue)) {
                 groups.get(groupByValue).push(row);
@@ -47,75 +46,86 @@ class PQLStatement {
             else {
                 groups.set(groupByValue, [row]);
             }
-        });
-        const x = [];
-        const y = [];
-        groups.forEach((rows, _) => {
-            x.push(computeAggregateValue(rows, xAttr, this.groupByColumn));
-            y.push(computeAggregateValue(rows, yAttr, this.groupByColumn));
-        });
-        return x.map((x, i) => ({ x: x, y: y[i] }));
+        }
+        const groupEntries = Array.from(groups.entries());
+        for (let [name, plotColumn] of this.plotCall.args) {
+            columnDataMap.set(name, this._computeAggregatedColumn(groupEntries, plotColumn));
+        }
+        return columnDataMap;
     }
-    _createPlot(points, config) {
-        switch (this.plotType) {
-            case "BAR":
-                let barChartPoints = points
-                    .map(point => ({ x: Number(point.x), y: String(point.y) }))
-                    .filter(point => !isNaN(point.x));
-                const categorySet = new Set();
-                for (let point of barChartPoints) {
-                    if (categorySet.has(point.y)) {
-                        throw new exceptions_1.PQLError(`Duplicate bar chart category ${point.y} found in data - use GROUPBY with category column to fix`);
-                    }
-                    categorySet.add(point.y);
+    _computeAggregatedColumn(groupEntries, plotColumn) {
+        switch (plotColumn.aggregationFunction) {
+            case "MIN":
+                return groupEntries.map(([_, rows]) => columnMin(rows, plotColumn.column));
+            case "MAX":
+                return groupEntries.map(([_, rows]) => columnMax(rows, plotColumn.column));
+            case "AVG":
+                return groupEntries.map(([_, rows]) => columnSum(rows, plotColumn.column) / rows.length);
+            case "SUM":
+                return groupEntries.map(([_, rows]) => columnSum(rows, plotColumn.column));
+            case "COUNT":
+                return groupEntries.map(([_, rows]) => rows.length);
+            case undefined:
+                if (plotColumn.column === this.groupByColumn) {
+                    return groupEntries.map(([key, _]) => key);
                 }
-                barChartPoints.sort((p1, p2) => p2.x - p1.x);
-                barChartPoints = this._slicePoints(barChartPoints);
-                barChartPoints.reverse();
-                return (0, plots_1.barChart)(barChartPoints, config);
-            case "LINE":
-                const lineChartPoints = points
-                    .map(point => ({ x: Number(point.x), y: Number(point.y) }))
-                    .filter(point => !isNaN(point.x) && !isNaN(point.y));
-                lineChartPoints.sort((p1, p2) => p1.x - p2.x);
-                return (0, plots_1.lineChart)(this._slicePoints(lineChartPoints), config);
-            case "SCATTER":
-                const scatterPlotPoints = points
-                    .map(point => ({ x: Number(point.x), y: Number(point.y) }))
-                    .filter(point => !isNaN(point.x) && !isNaN(point.y));
-                scatterPlotPoints.sort((p1, p2) => p1.x - p2.x);
-                return (0, plots_1.scatterPlot)(this._slicePoints(scatterPlotPoints), config);
             default:
-                throw new exceptions_1.PQLError(`Invalid plot type ${this.plotType}`);
+                throw new exceptions_1.PQLError(`Invalid aggregation function type ${plotColumn.aggregationFunction}`);
         }
     }
-    _slicePoints(points) {
-        if (!this.limitAndOffset) {
-            return points;
+    _createBarChart(columnDataMap, config) {
+        const categoryColumn = this.plotCall.args.get("categories");
+        const valuesColumn = this.plotCall.args.get("values");
+        if (!categoryColumn || !valuesColumn) {
+            throw new exceptions_1.PQLError("Missing category or values column");
         }
-        return points.slice(this.limitAndOffset.offset, this.limitAndOffset.offset + this.limitAndOffset.limit);
+        if (!config.xLabel) {
+            config.xLabel = getLabel(valuesColumn);
+        }
+        if (!config.yLabel) {
+            config.yLabel = getLabel(categoryColumn);
+        }
+        const categories = columnDataMap.get("categories");
+        const values = columnDataMap.get("values");
+        if (!categories || !values) {
+            throw new exceptions_1.PQLError("Missing category or values data");
+        }
+        let points = categories.map((category, i) => [String(category), Number(values[i])])
+            .filter(([_, value]) => !isNaN(value));
+        points.sort((p1, p2) => p2[1] - p1[1]);
+        if (this.limitAndOffset) {
+            points = points.slice(this.limitAndOffset.offset, this.limitAndOffset.offset + this.limitAndOffset.limit);
+        }
+        points.reverse();
+        return (0, plots_1.barChart)(points, config);
+    }
+    _createXYPlot(columnDataMap, config, isScatter = false) {
+        const xColumn = this.plotCall.args.get("x");
+        const yColumn = this.plotCall.args.get("y");
+        if (!xColumn || !yColumn) {
+            throw new exceptions_1.PQLError("Missing x or y column");
+        }
+        if (!config.xLabel) {
+            config.xLabel = getLabel(xColumn);
+        }
+        if (!config.yLabel) {
+            config.yLabel = getLabel(yColumn);
+        }
+        const xData = columnDataMap.get("x");
+        const yData = columnDataMap.get("y");
+        if (!xData || !yData) {
+            throw new exceptions_1.PQLError("Missing x or y data");
+        }
+        let points = xData.map((x, i) => [Number(x), Number(yData[i])])
+            .filter(([x, y]) => !isNaN(x) && !isNaN(y));
+        points.sort((p1, p2) => p1[0] - p2[0]);
+        if (this.limitAndOffset) {
+            points = points.slice(this.limitAndOffset.offset, this.limitAndOffset.offset + this.limitAndOffset.limit);
+        }
+        return isScatter ? (0, plots_1.scatterPlot)(points, config) : (0, plots_1.lineChart)(points, config);
     }
 }
 exports.PQLStatement = PQLStatement;
-function computeAggregateValue(data, attribute, groupByColumn) {
-    switch (attribute.aggregationFunction) {
-        case "MIN":
-            return columnMin(data, attribute.column);
-        case "MAX":
-            return columnMax(data, attribute.column);
-        case "AVG":
-            return columnSum(data, attribute.column) / data.length;
-        case "SUM":
-            return columnSum(data, attribute.column);
-        case "COUNT":
-            return data.length;
-        default:
-    }
-    if (attribute.column === groupByColumn) {
-        return data[0][groupByColumn];
-    }
-    throw new exceptions_1.PQLError(`Invalid attribute ${attribute}`);
-}
 function columnMin(data, column) {
     let result = null;
     for (let row of data) {

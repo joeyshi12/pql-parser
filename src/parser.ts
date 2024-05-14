@@ -47,16 +47,15 @@ export class Parser {
     }
 
     private _consumePlotClause(): PlotCall {
-        const plotToken = this._consumeToken("KEYWORD");
-        if (plotToken.value !== "PLOT") {
-            throw new PQLError("Must begin query with PLOT");
+        if (this._consumeToken("KEYWORD").value.toUpperCase() !== "PLOT") {
+            throw new PQLError("Expected query to begin with PLOT");
         }
         const plotType = <PlotType>this._consumeToken("PLOT_TYPE").value;
         this._consumeToken("LPAREN");
         const args: Map<string, PlotColumn> = new Map();
         switch (plotType) {
             case "BAR":
-                args.set("labels", this._consumePlotColumn());
+                args.set("categories", this._consumePlotColumn());
                 this._consumeToken("COMMA");
                 args.set("values", this._consumePlotColumn());
                 break;

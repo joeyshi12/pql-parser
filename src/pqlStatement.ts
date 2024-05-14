@@ -19,7 +19,16 @@ export class PQLStatement {
     public execute(data: RowData[], config: PlotConfig): SVGSVGElement {
         const filteredData = this.whereFilter ? data.filter(row => this.whereFilter?.satisfy(row)) : data;
         const columnDataMap = this._processData(filteredData);
-        return this._createPlot(columnDataMap, config);
+        switch (this.plotCall.plotType) {
+            case "BAR":
+                return this._createBarChart(columnDataMap, config);
+            case "LINE":
+                return this._createXYPlot(columnDataMap, config);
+            case "SCATTER":
+                return this._createXYPlot(columnDataMap, config, true);
+            default:
+                throw new PQLError(`Invalid plot type ${this.plotCall}`);
+        }
     }
 
     private _processData(data: RowData[]): Map<string, Primitive[]> {
@@ -29,94 +38,118 @@ export class PQLStatement {
             this.plotCall.args.forEach((plotColumn, name) => {
                 columnDataMap.set(name, data.map(row => row[plotColumn.column!]));
             });
+            return columnDataMap;
         }
 
         const groups: Map<Primitive, RowData[]> = new Map();
-        data.forEach(row => {
+        for (let row of data) {
             const groupByValue = row[this.groupByColumn!];
             if (groups.has(groupByValue)) {
                 groups.get(groupByValue)!.push(row);
             } else {
                 groups.set(groupByValue, [row]);
             }
-        });
+        }
 
-        this.plotCall.args.forEach((plotColumn, name) => {
-            const values: Primitive[] = [];
-            groups.forEach((rows: RowData[], _) => {
-                values.push(computeAggregateValue(rows, plotColumn, this.groupByColumn!));
-            });
-            columnDataMap.set(name, values);
-        });
+        const groupEntries: [Primitive, RowData[]][] = Array.from(groups.entries());
+        for (let [name, plotColumn] of this.plotCall.args) {
+            columnDataMap.set(name, this._computeAggregatedColumn(groupEntries, plotColumn));
+        }
 
         return columnDataMap;
     }
 
-    private _createPlot(columnDataMap: Map<string, Primitive[]>, config: PlotConfig): SVGSVGElement {
-        switch (this.plotCall.plotType) {
-            case "BAR":
-                let barChartPoints: [number, string][] = columnDataMap
-                    .map(point => ({ x: Number(point.x), y: String(point.y) }))
-                    .filter(point => !isNaN(point.x));
-                const categorySet: Set<string> = new Set();
-                for (let point of barChartPoints) {
-                    if (categorySet.has(point.y)) {
-                        throw new PQLError(`Duplicate bar chart category ${point.y} found in data - use GROUPBY with category column to fix`);
-                    }
-                    categorySet.add(point.y);
+    private _computeAggregatedColumn(groupEntries: [Primitive, RowData[]][], plotColumn: PlotColumn) {
+        switch (plotColumn.aggregationFunction) {
+            case "MIN":
+                return groupEntries.map(([_, rows]) => columnMin(rows, plotColumn.column!));
+            case "MAX":
+                return groupEntries.map(([_, rows]) => columnMax(rows, plotColumn.column!));
+            case "AVG":
+                return groupEntries.map(([_, rows]) => columnSum(rows, plotColumn.column!) / rows.length);
+            case "SUM":
+                return groupEntries.map(([_, rows]) => columnSum(rows, plotColumn.column!));
+            case "COUNT":
+                return groupEntries.map(([_, rows]) => rows.length);
+            case undefined:
+                if (plotColumn.column === this.groupByColumn) {
+                    return groupEntries.map(([key, _]) => key);
                 }
-                barChartPoints.sort((p1, p2) => p2.x - p1.x);
-                barChartPoints = this._slicePoints(barChartPoints);
-                barChartPoints.reverse();
-                return barChart(barChartPoints, config);
-            case "LINE":
-                const lineChartPoints: Point<number, number>[] = columnDataMap
-                    .map(point => ({ x: Number(point.x), y: Number(point.y) }))
-                    .filter(point => !isNaN(point.x) && !isNaN(point.y));
-                lineChartPoints.sort((p1, p2) => p1.x - p2.x);
-                return lineChart(this._slicePoints(lineChartPoints), config);
-            case "SCATTER":
-                const scatterPlotPoints: Point<number, number>[] = columnDataMap
-                    .map(point => ({ x: Number(point.x), y: Number(point.y) }))
-                    .filter(point => !isNaN(point.x) && !isNaN(point.y));
-                scatterPlotPoints.sort((p1, p2) => p1.x - p2.x);
-                return scatterPlot(this._slicePoints(scatterPlotPoints), config);
             default:
-                throw new PQLError(`Invalid plot type ${this.plotCall}`);
+                throw new PQLError(`Invalid aggregation function type ${plotColumn.aggregationFunction}`);
         }
     }
 
-    private _createBarChart()
-
-    private _slicePoints<PrimitiveX extends Primitive, PrimitiveY extends Primitive>(points: Point<PrimitiveX, PrimitiveY>[]): Point<PrimitiveX, PrimitiveY>[] {
-        if (!this.limitAndOffset) {
-            return points;
+    private _createBarChart(columnDataMap: Map<string, Primitive[]>, config: PlotConfig): SVGSVGElement {
+        const categoryColumn = this.plotCall.args.get("categories");
+        const valuesColumn = this.plotCall.args.get("values");
+        if (!categoryColumn || !valuesColumn) {
+            throw new PQLError("Missing category or values column");
         }
-        return points.slice(
-            this.limitAndOffset.offset,
-            this.limitAndOffset.offset + this.limitAndOffset.limit
-        );
-    }
-}
 
-function computeAggregateValue(data: RowData[], attribute: PlotColumn, groupByColumn: string) {
-    switch (attribute.aggregationFunction) {
-        case "MIN":
-            return columnMin(data, attribute.column!);
-        case "MAX":
-            return columnMax(data, attribute.column!)
-        case "AVG":
-            return columnSum(data, attribute.column!) / data.length;
-        case "SUM":
-            return columnSum(data, attribute.column!);
-        case "COUNT":
-            return data.length;
-        default:
+        if (!config.xLabel) {
+            config.xLabel = getLabel(valuesColumn);
+        }
+
+        if (!config.yLabel) {
+            config.yLabel = getLabel(categoryColumn);
+        }
+
+        const categories = columnDataMap.get("categories");
+        const values = columnDataMap.get("values");
+        if (!categories || !values) {
+            throw new PQLError("Missing category or values data");
+        }
+
+        let points: [string, number][] = categories.map((category, i): [string, number] => [String(category), Number(values[i])])
+            .filter(([_, value]: [string, number]) => !isNaN(value));
+        points.sort((p1, p2) => p2[1] - p1[1]);
+
+        if (this.limitAndOffset) {
+            points = points.slice(
+                this.limitAndOffset.offset,
+                this.limitAndOffset.offset + this.limitAndOffset.limit
+            );
+        }
+
+        points.reverse();
+        return barChart(points, config);
     }
-    if (attribute.column === groupByColumn) {
-        return data[0][groupByColumn];
+
+    private _createXYPlot(columnDataMap: Map<string, Primitive[]>, config: PlotConfig, isScatter: boolean = false): SVGSVGElement {
+        const xColumn = this.plotCall.args.get("x");
+        const yColumn = this.plotCall.args.get("y");
+        if (!xColumn || !yColumn) {
+            throw new PQLError("Missing x or y column");
+        }
+
+        if (!config.xLabel) {
+            config.xLabel = getLabel(xColumn);
+        }
+
+        if (!config.yLabel) {
+            config.yLabel = getLabel(yColumn);
+        }
+
+        const xData = columnDataMap.get("x");
+        const yData = columnDataMap.get("y");
+        if (!xData || !yData) {
+            throw new PQLError("Missing x or y data");
+        }
+
+        let points: [number, number][] = xData.map((x, i): [number, number] => [Number(x), Number(yData[i])])
+            .filter(([x, y]: [number, number]) => !isNaN(x) && !isNaN(y));
+        points.sort((p1, p2) => p1[0] - p2[0]);
+
+        if (this.limitAndOffset) {
+            points = points.slice(
+                this.limitAndOffset.offset,
+                this.limitAndOffset.offset + this.limitAndOffset.limit
+            );
+        }
+
+        return isScatter ? scatterPlot(points, config) : lineChart(points, config);
     }
-    throw new PQLError(`Invalid attribute ${attribute}`)
 }
 
 function columnMin(data: RowData[], column: string): number {

@@ -14,8 +14,7 @@ export declare class Parser {
     parse(): PQLStatement;
     private _validateAttributes;
     private _consumePlotClause;
-    private _consumeUsingClause;
-    private _consumeUsingAttribute;
+    private _consumePlotColumn;
     private _consumeWhereClauseOptional;
     private _consumeCondition;
     private _consumeConditionGroup;
@@ -23,6 +22,6 @@ export declare class Parser {
     private _consumeGroupByClauseOptional;
     private _consumeLimitAndOffsetClauseOptional;
     private _advanceToken;
-    private _consumeTokenWithType;
+    private _consumeToken;
     private _consumeComparisonValue;
 }
