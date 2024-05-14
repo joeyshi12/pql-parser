@@ -172,15 +172,6 @@ export function scatterPlot(points: [number, number][], config: PlotConfig): SVG
         .domain([yMin!, yMax!])
         .range([height, 0]);
 
-    plotArea.selectAll("circle")
-        .data(points)
-        .enter()
-        .append("circle")
-        .attr("cx", (p: [number, number]) => xScale(p[0]))
-        .attr("cy", (p: [number, number]) => yScale(p[1]))
-        .attr("r", 4)
-        .attr("fill", "steelblue");
-
     const xTicks = xScale.ticks();
     const xTickFormatter = getTickFormatter(xTicks[1] - xTicks[0]);
     plotArea.append("g")
@@ -191,6 +182,15 @@ export function scatterPlot(points: [number, number][], config: PlotConfig): SVG
     const yTickFormatter = getTickFormatter(yTicks[1] - yTicks[0]);
     plotArea.append("g")
         .call(d3Axis.axisLeft(yScale).tickFormat(yTickFormatter));
+
+    plotArea.selectAll("circle")
+        .data(points)
+        .enter()
+        .append("circle")
+        .attr("cx", (p: [number, number]) => xScale(p[0]))
+        .attr("cy", (p: [number, number]) => yScale(p[1]))
+        .attr("r", 4)
+        .attr("fill", "steelblue");
 
     return svg.node()!;
 }
