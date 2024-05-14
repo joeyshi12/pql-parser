@@ -18,10 +18,6 @@ PLOT (BAR(category_column, value_column) | LINE(x_column, y_column) | SCATTER(x_
 [LIMIT <limit> [OFFSET <offset>]]
 ```
 
-- BAR plots expect `x: string` and `y: number`
-- LINE plots expect `x: number` and `y: number`
-- SCATTER plots expect `x: number` and `y: number`
-
 ## EBNF
 
 ```
