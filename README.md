@@ -11,7 +11,7 @@ A simple CSV visualizer tool made with this parser is hosted at <a href="https:/
 ## Syntax
 
 ```
-PLOT (BAR(labels, values) | LINE(x_column, y_column) | SCATTER(x_column, y_column))
+PLOT (BAR(category_column, value_column) | LINE(x_column, y_column) | SCATTER(x_column, y_column))
 [WHERE <condition>]
 [GROUP BY <column>]
 [HAVING <condition>]
