@@ -11,8 +11,7 @@ A simple CSV visualizer tool made with this parser is hosted at <a href="https:/
 ## Syntax
 
 ```
-PLOT (BAR | LINE | SCATTER)
-USING <x_column> [AS <x_label>], <y_column> [AS <y_label>]
+PLOT (BAR(labels, values) | LINE(x_column, y_column) | SCATTER(x_column, y_column))
 [WHERE <condition>]
 [GROUP BY <column>]
 [HAVING <condition>]
@@ -26,11 +25,15 @@ USING <x_column> [AS <x_label>], <y_column> [AS <y_label>]
 ## EBNF
 
 ```
-<plot_statement> ::= "PLOT" <plot_type> <using_clause> [<where_clause>] [<group_by_clause>] [<having_clause>] [<limit_and_offset_clause>]
+<plot_statement> ::= "PLOT" <plot_call> [<where_clause>] [<group_by_clause>] [<having_clause>] [<limit_and_offset_clause>]
 
-<plot_type> ::= "BAR" | "LINE" | "SCATTER"
+<plot_clause> ::= <bar_call> | <line_call> | <scatter_call>
 
-<using_clause> ::= "USING" <attributes>
+<bar_call> ::= "BAR" "(" <attribute> "," <attribute> ")"
+
+<line_call> ::= "LINE" "(" <attribute> "," <attribute> ")"
+
+<scatter_call> ::= "SCATTER" "(" <attribute> "," <attribute> ")"
 
 <where_clause> ::= "WHERE" <where_condition>
 
@@ -41,8 +44,6 @@ USING <x_column> [AS <x_label>], <y_column> [AS <y_label>]
 <limit_and_offset_clause> ::= "LIMIT" <number> ["OFFSET" <number>]
 
 <boolean_operator> ::= "OR" | "AND"
-
-<attributes> ::= <attribute> | <attribute> "," <attributes>
 
 <attribute> ::= <aggregated_column> ["AS" <identifier>]
 

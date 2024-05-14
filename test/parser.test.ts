@@ -4,30 +4,30 @@ import { Lexer } from '../src/lexer';
 import { Parser } from '../src/parser';
 
 test("basic plot statement", () => {
-    const input = "PLOT BAR USING xcol, ycol";
+    const input = "PLOT BAR(xcol, ycol)";
     const statement = new Parser(new Lexer(input)).parse();
-    expect(statement.plotType).toBe("BAR");
-    expect(statement.usingAttributes).toEqual([
+    expect(statement.plotCall.plotType).toBe("BAR");
+    expect(Array.from(statement.plotCall.args.values())).toEqual([
         { column: "xcol" },
         { column: "ycol" },
     ]);
 });
 
 test("plot statement with named attributes", () => {
-    const input = "PLOT BAR USING xcol AS x, ycol AS y";
+    const input = "PLOT BAR(xcol AS x, ycol AS y)";
     const statement = new Parser(new Lexer(input)).parse();
-    expect(statement.plotType).toBe("BAR");
-    expect(statement.usingAttributes).toEqual([
+    expect(statement.plotCall.plotType).toBe("BAR");
+    expect(Array.from(statement.plotCall.args.values())).toEqual([
         { column: "xcol", displayName: "x" },
         { column: "ycol", displayName: "y" },
     ]);
 });
 
 test("plot statement with string where clause", () => {
-    const input = "PLOT BAR USING xcol, ycol WHERE zcol = 'on'";
+    const input = "PLOT BAR(xcol, ycol) WHERE zcol = 'on'";
     const statement = new Parser(new Lexer(input)).parse();
-    expect(statement.plotType).toBe("BAR");
-    expect(statement.usingAttributes).toEqual([
+    expect(statement.plotCall.plotType).toBe("BAR");
+    expect(Array.from(statement.plotCall.args.values())).toEqual([
         { column: "xcol" },
         { column: "ycol" },
     ]);
@@ -37,10 +37,10 @@ test("plot statement with string where clause", () => {
 })
 
 test("plot statement with greater than where clause", () => {
-    const input = "PLOT BAR USING xcol, ycol WHERE zcol > 0";
+    const input = "PLOT BAR(xcol, ycol) WHERE zcol > 0";
     const statement = new Parser(new Lexer(input)).parse();
-    expect(statement.plotType).toBe("BAR");
-    expect(statement.usingAttributes).toEqual([
+    expect(statement.plotCall.plotType).toBe("BAR");
+    expect(Array.from(statement.plotCall.args.values())).toEqual([
         { column: "xcol" },
         { column: "ycol" },
     ]);
@@ -50,10 +50,10 @@ test("plot statement with greater than where clause", () => {
 })
 
 test("plot statement with AND where clause", () => {
-    const input = "PLOT BAR USING xcol, ycol WHERE zcol > 0 AND zcol < 10";
+    const input = "PLOT BAR(xcol, ycol) WHERE zcol > 0 AND zcol < 10";
     const statement = new Parser(new Lexer(input)).parse();
-    expect(statement.plotType).toBe("BAR");
-    expect(statement.usingAttributes).toEqual([
+    expect(statement.plotCall.plotType).toBe("BAR");
+    expect(Array.from(statement.plotCall.args.values())).toEqual([
         { column: "xcol" },
         { column: "ycol" },
     ]);
@@ -72,10 +72,10 @@ test("plot statement with AND where clause", () => {
 })
 
 test("plot statement with OR where clause", () => {
-    const input = "PLOT BAR USING xcol, ycol WHERE zcol > 0 OR zcol < 10";
+    const input = "PLOT BAR(xcol, ycol) WHERE zcol > 0 OR zcol < 10";
     const statement = new Parser(new Lexer(input)).parse();
-    expect(statement.plotType).toBe("BAR");
-    expect(statement.usingAttributes).toEqual([
+    expect(statement.plotCall.plotType).toBe("BAR");
+    expect(Array.from(statement.plotCall.args.values())).toEqual([
         { column: "xcol" },
         { column: "ycol" },
     ]);
@@ -94,10 +94,10 @@ test("plot statement with OR where clause", () => {
 })
 
 test("plot statement with AND and OR conditions", () => {
-    const input = "PLOT BAR USING xcol, ycol WHERE zcol > 0 OR zcol < 10 AND xcol > 0";
+    const input = "PLOT BAR(xcol, ycol) WHERE zcol > 0 OR zcol < 10 AND xcol > 0";
     const statement = new Parser(new Lexer(input)).parse();
-    expect(statement.plotType).toBe("BAR");
-    expect(statement.usingAttributes).toEqual([
+    expect(statement.plotCall.plotType).toBe("BAR");
+    expect(Array.from(statement.plotCall.args.values())).toEqual([
         { column: "xcol" },
         { column: "ycol" },
     ]);
@@ -120,10 +120,10 @@ test("plot statement with AND and OR conditions", () => {
 })
 
 test("plot statement with WHERE clause with parentheses", () => {
-    const input = "PLOT BAR USING xcol, ycol WHERE (zcol > 0 OR zcol < 10) AND xcol > 0";
+    const input = "PLOT BAR(xcol, ycol) WHERE (zcol > 0 OR zcol < 10) AND xcol > 0";
     const statement = new Parser(new Lexer(input)).parse();
-    expect(statement.plotType).toBe("BAR");
-    expect(statement.usingAttributes).toEqual([
+    expect(statement.plotCall.plotType).toBe("BAR");
+    expect(Array.from(statement.plotCall.args.values())).toEqual([
         { column: "xcol" },
         { column: "ycol" },
     ]);
@@ -146,10 +146,10 @@ test("plot statement with WHERE clause with parentheses", () => {
 })
 
 test("plot statement with groupby clause", () => {
-    const input = "PLOT BAR USING xcol, AVG(ycol) GROUPBY xcol";
+    const input = "PLOT BAR(xcol, AVG(ycol)) GROUPBY xcol";
     const statement = new Parser(new Lexer(input)).parse();
-    expect(statement.plotType).toBe("BAR");
-    expect(statement.usingAttributes).toEqual([
+    expect(statement.plotCall.plotType).toBe("BAR");
+    expect(Array.from(statement.plotCall.args.values())).toEqual([
         { column: "xcol" },
         { column: "ycol", aggregationFunction: "AVG" },
     ]);
@@ -157,10 +157,10 @@ test("plot statement with groupby clause", () => {
 })
 
 test("plot statement with empty count aggregation", () => {
-    const input = "PLOT SCATTER USING xcol, COUNT() GROUPBY xcol";
+    const input = "PLOT SCATTER(xcol, COUNT()) GROUPBY xcol";
     const statement = new Parser(new Lexer(input)).parse();
-    expect(statement.plotType).toBe("SCATTER");
-    expect(statement.usingAttributes).toEqual([
+    expect(statement.plotCall.plotType).toBe("SCATTER");
+    expect(Array.from(statement.plotCall.args.values())).toEqual([
         { column: "xcol" },
         { aggregationFunction: "COUNT" },
     ]);
@@ -168,10 +168,10 @@ test("plot statement with empty count aggregation", () => {
 })
 
 test("plot statement with limit and offset", () => {
-    const input = "PLOT SCATTER USING xcol, COUNT() GROUPBY xcol LIMIT 1 OFFSET 2";
+    const input = "PLOT SCATTER(xcol, COUNT()) GROUPBY xcol LIMIT 1 OFFSET 2";
     const statement = new Parser(new Lexer(input)).parse();
-    expect(statement.plotType).toBe("SCATTER");
-    expect(statement.usingAttributes).toEqual([
+    expect(statement.plotCall.plotType).toBe("SCATTER");
+    expect(Array.from(statement.plotCall.args.values())).toEqual([
         { column: "xcol" },
         { aggregationFunction: "COUNT" },
     ]);
@@ -180,7 +180,7 @@ test("plot statement with limit and offset", () => {
 })
 
 test("regular query with invalid column", () => {
-    const input = "PLOT BAR USING xcol, AVG(ycol)";
+    const input = "PLOT BAR(xcol, AVG(ycol))";
     const parser = new Parser(new Lexer(input));
     try {
         parser.parse();
@@ -191,7 +191,7 @@ test("regular query with invalid column", () => {
 })
 
 test("aggregation query with invalid column", () => {
-    const input = "PLOT BAR USING xcol, ycol GROUPBY xcol";
+    const input = "PLOT BAR(xcol, ycol) GROUPBY xcol";
     const parser = new Parser(new Lexer(input));
     try {
         parser.parse();

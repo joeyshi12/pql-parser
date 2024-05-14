@@ -3,14 +3,9 @@ import * as d3Scale from "d3-scale";
 import * as d3Array from "d3-array";
 import * as d3Axis from "d3-axis";
 import * as d3Shape from "d3-shape";
-import { Point, PlotConfig } from "./types";
-import { PQLError } from "./exceptions";
+import { PlotConfig } from "./types";
 
-export function barChart(points: Point<number, string>[], config: PlotConfig): SVGSVGElement {
-    if (points.length === 0) {
-        throw new PQLError("Failed to create bar chart - no plottable Point<number, string> given")
-    }
-
+export function barChart(points: [string, number][], config: PlotConfig): SVGSVGElement {
     const [width, height] = getShape(config);
     const svg = d3Select.create("svg")
         .attr("width", config.containerWidth)
@@ -35,13 +30,13 @@ export function barChart(points: Point<number, string>[], config: PlotConfig): S
     const plotArea = svg.append("g")
         .attr("transform", `translate(${config.margin.left},${config.margin.top})`);
 
-    const [xMin, xMax] = d3Array.extent(points, p => p.x);
+    const [xMin, xMax] = d3Array.extent(points, p => p[1]);
     const xScale = d3Scale.scaleLinear()
         .domain([Math.min(0, xMin!), xMax!])
         .range([0, width]);
 
     const yScale = d3Scale.scaleBand()
-        .domain(points.map(p => p.y))
+        .domain(points.map(p => p[0]))
         .range([height, 0])
         .paddingInner(0.1)
         .paddingOuter(0);
@@ -66,10 +61,10 @@ export function barChart(points: Point<number, string>[], config: PlotConfig): S
         .data(points)
         .enter()
         .append("rect")
-        .attr("fill", (p: Point<number, string>) => p.x > 0 ? "steelblue" : "orange")
-        .attr("x", (p: Point<number, string>) => xScale(Math.min(p.x, 0)))
-        .attr("y", (p: Point<number, string>) => yScale(p.y)!)
-        .attr("width", (p: Point<number, string>) => Math.abs(xScale(p.x) - xScale(0)))
+        .attr("fill", (p: [string, number]) => p[1] > 0 ? "steelblue" : "orange")
+        .attr("x", (p: [string, number]) => xScale(Math.min(p[1], 0)))
+        .attr("y", (p: [string, number]) => yScale(p[0])!)
+        .attr("width", (p: [string, number]) => Math.abs(xScale(p[1]) - xScale(0)))
         .attr("height", yScale.bandwidth())
         .attr("opacity", "0.7");
 
@@ -77,18 +72,14 @@ export function barChart(points: Point<number, string>[], config: PlotConfig): S
         .attr("transform", `translate(${xScale(0)},0)`)
         .call(yAxis)
         .call(g => g.selectAll(".tick text")
-              .filter((_, i) => points[i].x < 0)
+              .filter((_, i) => points[i][1] < 0)
               .attr("text-anchor", "start")
               .attr("x", 6));
 
     return svg.node()!;
 }
 
-export function lineChart(points: Point<number, number>[], config: PlotConfig): SVGSVGElement {
-    if (points.length === 0) {
-        throw new PQLError("Failed to create line chart - no plottable Point<number, number> given")
-    }
-
+export function lineChart(points: [number, number][], config: PlotConfig): SVGSVGElement {
     const [width, height] = getShape(config);
     const svg = d3Select.create("svg")
         .attr("width", config.containerWidth)
@@ -112,12 +103,12 @@ export function lineChart(points: Point<number, number>[], config: PlotConfig): 
     const plotArea = svg.append("g")
         .attr("transform", `translate(${config.margin.left},${config.margin.top})`);
 
-    const [xMin, xMax] = d3Array.extent(points, p => p.x);
+    const [xMin, xMax] = d3Array.extent(points, p => p[0]);
     const xScale = d3Scale.scaleLinear()
         .domain([xMin!, xMax!])
         .range([0, width]);
 
-    const [yMin, yMax] = d3Array.extent(points, p => p.y);
+    const [yMin, yMax] = d3Array.extent(points, p => p[1]);
     const yScale = d3Scale.scaleLinear()
         .domain([yMin!, yMax!])
         .range([height, 0]);
@@ -133,9 +124,9 @@ export function lineChart(points: Point<number, number>[], config: PlotConfig): 
     plotArea.append("g")
         .call(d3Axis.axisLeft(yScale).tickFormat(yTickFormatter));
 
-    const line: d3Shape.Line<Point<number, number>> = d3Shape.line<Point<number, number>>()
-        .x(p => xScale(p.x))
-        .y(p => yScale(p.y));
+    const line: d3Shape.Line<[number, number]> = d3Shape.line<[number, number]>()
+        .x(p => xScale(p[0]))
+        .y(p => yScale(p[1]));
 
     plotArea.append("path")
         .datum(points)
@@ -147,11 +138,7 @@ export function lineChart(points: Point<number, number>[], config: PlotConfig): 
     return svg.node()!;
 }
 
-export function scatterPlot(points: Point<number, number>[], config: PlotConfig): SVGSVGElement {
-    if (points.length === 0) {
-        throw new PQLError("Failed to create scatter plot - no plottable Point<number, number> given")
-    }
-
+export function scatterPlot(points: [number, number][], config: PlotConfig): SVGSVGElement {
     const [width, height] = getShape(config);
     const svg = d3Select.create("svg")
         .attr("width", config.containerWidth)
@@ -175,24 +162,15 @@ export function scatterPlot(points: Point<number, number>[], config: PlotConfig)
     const plotArea = svg.append("g")
         .attr("transform", `translate(${config.margin.left},${config.margin.top})`);
 
-    const [xMin, xMax] = d3Array.extent(points, p => p.x);
+    const [xMin, xMax] = d3Array.extent(points, p => p[0]);
     const xScale = d3Scale.scaleLinear()
         .domain([xMin!, xMax!])
         .range([0, width]);
 
-    const [yMin, yMax] = d3Array.extent(points, p => p.y);
+    const [yMin, yMax] = d3Array.extent(points, p => p[1]);
     const yScale = d3Scale.scaleLinear()
         .domain([yMin!, yMax!])
         .range([height, 0]);
-
-    plotArea.selectAll("circle")
-        .data(points)
-        .enter()
-        .append("circle")
-        .attr("cx", (p: Point<number, number>) => xScale(p.x))
-        .attr("cy", (p: Point<number, number>) => yScale(p.y))
-        .attr("r", 4)
-        .attr("fill", "steelblue");
 
     const xTicks = xScale.ticks();
     const xTickFormatter = getTickFormatter(xTicks[1] - xTicks[0]);
@@ -204,6 +182,15 @@ export function scatterPlot(points: Point<number, number>[], config: PlotConfig)
     const yTickFormatter = getTickFormatter(yTicks[1] - yTicks[0]);
     plotArea.append("g")
         .call(d3Axis.axisLeft(yScale).tickFormat(yTickFormatter));
+
+    plotArea.selectAll("circle")
+        .data(points)
+        .enter()
+        .append("circle")
+        .attr("cx", (p: [number, number]) => xScale(p[0]))
+        .attr("cy", (p: [number, number]) => yScale(p[1]))
+        .attr("r", 4)
+        .attr("fill", "steelblue");
 
     return svg.node()!;
 }

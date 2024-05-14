@@ -96,7 +96,6 @@ export class Lexer {
                 const identifier = this._readAlphanumeric();
                 switch (identifier.toUpperCase()) {
                     case "PLOT":
-                    case "USING":
                     case "AS":
                     case "WHERE":
                     case "GROUPBY":
@@ -113,7 +112,7 @@ export class Lexer {
                     case "BAR":
                     case "LINE":
                     case "SCATTER":
-                        if (!this._currentChar || this._currentChar === " ") {
+                        if (/[\s(]/.test(this._currentChar)) {
                             return { type: "PLOT_TYPE", value: identifier.toUpperCase() };
                         }
                     case "MIN":
