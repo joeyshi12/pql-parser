@@ -1,7 +1,7 @@
 import { Lexer } from './lexer';
 import { PQLStatement } from './pqlStatement';
 /**
- * Parser for Plot Query Language (PQL) queries
+ * Parser for PQL queries
  */
 export declare class Parser {
     private _lexer;
@@ -21,7 +21,6 @@ export declare class Parser {
     private _consumeComparison;
     private _consumeGroupByClauseOptional;
     private _consumeLimitAndOffsetClauseOptional;
-    private _advanceToken;
     private _consumeToken;
     private _consumeComparisonValue;
 }

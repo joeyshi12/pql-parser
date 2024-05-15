@@ -5,6 +5,9 @@ const exceptions_1 = require("./exceptions");
 const plots_1 = require("./plots");
 const lexer_1 = require("./lexer");
 const parser_1 = require("./parser");
+/**
+ * AST representation of a PQL query
+ */
 class PQLStatement {
     constructor(plotCall, whereFilter, groupByColumn, limitAndOffset) {
         this.plotCall = plotCall;
@@ -12,9 +15,20 @@ class PQLStatement {
         this.groupByColumn = groupByColumn;
         this.limitAndOffset = limitAndOffset;
     }
+    /**
+     * Creates a PQLStatement from a PQL query string
+     * @param query - Query string
+     * @returns PQLStatement
+     */
     static create(query) {
         return new parser_1.Parser(new lexer_1.Lexer(query)).parse();
     }
+    /**
+     * Creates an SVG plot element from given data and config
+     * @param data   - Row data for plot
+     * @param config - Plot display configs
+     * @returns SVG plot element
+     */
     execute(data, config) {
         const filteredData = this.whereFilter ? data.filter(row => { var _a; return (_a = this.whereFilter) === null || _a === void 0 ? void 0 : _a.satisfy(row); }) : data;
         const columnDataMap = this._processData(filteredData);

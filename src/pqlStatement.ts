@@ -5,6 +5,9 @@ import { Lexer } from "./lexer";
 import { Parser } from "./parser";
 import { WhereFilter } from "./filters";
 
+/**
+ * AST representation of a PQL query
+ */
 export class PQLStatement {
     constructor(public readonly plotCall: PlotCall,
                 public readonly whereFilter?: WhereFilter,
@@ -12,10 +15,21 @@ export class PQLStatement {
                 public readonly limitAndOffset?: LimitAndOffset) {
     }
 
-    public static create(query: string) {
+    /**
+     * Creates a PQLStatement from a PQL query string
+     * @param query - Query string
+     * @returns PQLStatement
+     */
+    public static create(query: string): PQLStatement {
         return new Parser(new Lexer(query)).parse();
     }
 
+    /**
+     * Creates an SVG plot element from given data and config
+     * @param data   - Row data for plot
+     * @param config - Plot display configs
+     * @returns SVG plot element
+     */
     public execute(data: RowData[], config: PlotConfig): SVGSVGElement {
         const filteredData = this.whereFilter ? data.filter(row => this.whereFilter?.satisfy(row)) : data;
         const columnDataMap = this._processData(filteredData);

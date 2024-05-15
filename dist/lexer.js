@@ -3,21 +3,26 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Lexer = void 0;
 const exceptions_1 = require("./exceptions");
 /**
- * Lexer for tokenizing Plot Query Language (PQL) queries
+ * Lexer for tokenizing PQL queries
  */
 class Lexer {
-    constructor(input) {
+    constructor(_input) {
+        this._input = _input;
         this._position = 0;
-        this._currentChar = null;
-        this._input = input;
-        this._currentChar = this._input[this._position];
     }
     /**
      * Retrieves the current position of the lexer
      * @returns The current position of the lexer in the input string
      */
-    currentPosition() {
+    get currentPosition() {
         return this._position;
+    }
+    /**
+     * Retrieves the current char of the lexer
+     * @returns The current char of the lexer in the input string
+     */
+    get currentChar() {
+        return this._input[this._position];
     }
     /**
      * Peeks at the next character in the input string without advancing the lexer position
@@ -35,146 +40,138 @@ class Lexer {
      * @returns The next token found in the input string
      */
     nextToken() {
-        while (this._currentChar) {
-            if (/\s/.test(this._currentChar)) {
-                this._skipWhitespace();
-                continue;
-            }
-            if (this._isDigit(this._currentChar)) {
-                return { type: "NUMBER", value: this._readNumber() };
-            }
-            switch (this._currentChar) {
-                case "'":
-                    this._advance();
-                    return { type: "STRING", value: this._readString() };
-                case ",":
-                    this._advance();
-                    return { type: "COMMA", value: "," };
-                case "(":
-                    this._advance();
-                    return { type: "LPAREN", value: "(" };
-                case ")":
-                    this._advance();
-                    return { type: "RPAREN", value: ")" };
-                case ">":
-                    if (this.peek() === "=") {
-                        this._advance();
-                        this._advance();
-                        return { type: "COMPARISON_OPERATOR", value: ">=" };
+        if (this.currentChar && /\s/.test(this.currentChar)) {
+            this._skipWhitespace();
+        }
+        if (!this.currentChar) {
+            return { type: "EOF", value: "" };
+        }
+        if (isDigit(this.currentChar)) {
+            return { type: "NUMBER", value: this._readNumber() };
+        }
+        switch (this.currentChar) {
+            case "'":
+                this._position++;
+                return { type: "STRING", value: this._readString() };
+            case ",":
+                this._position++;
+                return { type: "COMMA", value: "," };
+            case "(":
+                this._position++;
+                return { type: "LPAREN", value: "(" };
+            case ")":
+                this._position++;
+                return { type: "RPAREN", value: ")" };
+            case ">":
+                if (this.peek() === "=") {
+                    this._position += 2;
+                    return { type: "COMPARISON_OPERATOR", value: ">=" };
+                }
+                else {
+                    this._position++;
+                    return { type: "COMPARISON_OPERATOR", value: ">" };
+                }
+            case "<":
+                if (this.peek() === "=") {
+                    this._position += 2;
+                    return { type: "COMPARISON_OPERATOR", value: "<=" };
+                }
+                else {
+                    this._position++;
+                    return { type: "COMPARISON_OPERATOR", value: "<" };
+                }
+            case "=":
+                this._position++;
+                return { type: "COMPARISON_OPERATOR", value: "=" };
+            case "!":
+                if (this.peek() === "=") {
+                    this._position += 2;
+                    return { type: "COMPARISON_OPERATOR", value: "!=" };
+                }
+            default:
+        }
+        if (isAlphabetic(this.currentChar)) {
+            const identifier = this._readAlphanumeric();
+            switch (identifier.toUpperCase()) {
+                case "PLOT":
+                case "AS":
+                case "WHERE":
+                case "GROUPBY":
+                case "LIMIT":
+                case "OFFSET":
+                    if (!this.currentChar || this.currentChar === " ") {
+                        return { type: "KEYWORD", value: identifier.toUpperCase() };
                     }
-                    else {
-                        this._advance();
-                        return { type: "COMPARISON_OPERATOR", value: ">" };
+                case "AND":
+                case "OR":
+                    if (!this.currentChar || this.currentChar === " ") {
+                        return { type: "LOGICAL_OPERATOR", value: identifier.toUpperCase() };
                     }
-                case "<":
-                    if (this.peek() === "=") {
-                        this._advance();
-                        this._advance();
-                        return { type: "COMPARISON_OPERATOR", value: "<=" };
+                case "BAR":
+                case "LINE":
+                case "SCATTER":
+                    if (/[\s(]/.test(this.currentChar)) {
+                        return { type: "PLOT_TYPE", value: identifier.toUpperCase() };
                     }
-                    else {
-                        this._advance();
-                        return { type: "COMPARISON_OPERATOR", value: "<" };
+                case "MIN":
+                case "MAX":
+                case "AVG":
+                case "COUNT":
+                case "SUM":
+                    if (/[\s(]/.test(this.currentChar)) {
+                        return { type: "AGGREGATION_FUNCTION", value: identifier.toUpperCase() };
                     }
-                case "=":
-                    this._advance();
-                    return { type: "COMPARISON_OPERATOR", value: "=" };
-                case "!":
-                    if (this.peek() === "=") {
-                        this._advance();
-                        this._advance();
-                        return { type: "COMPARISON_OPERATOR", value: "!=" };
+                case "NULL":
+                    if (!this.currentChar || this.currentChar === " ") {
+                        return { type: "NULL", value: identifier.toUpperCase() };
                     }
                 default:
+                    // TODO: simplify this
+                    if (!this.currentChar || /[\s,)]/.test(this.currentChar)) {
+                        return { type: "IDENTIFIER", value: identifier };
+                    }
             }
-            if (this._isAlphabetic(this._currentChar)) {
-                const identifier = this._readAlphanumeric();
-                switch (identifier.toUpperCase()) {
-                    case "PLOT":
-                    case "AS":
-                    case "WHERE":
-                    case "GROUPBY":
-                    case "LIMIT":
-                    case "OFFSET":
-                        if (!this._currentChar || this._currentChar === " ") {
-                            return { type: "KEYWORD", value: identifier.toUpperCase() };
-                        }
-                    case "AND":
-                    case "OR":
-                        if (!this._currentChar || this._currentChar === " ") {
-                            return { type: "LOGICAL_OPERATOR", value: identifier.toUpperCase() };
-                        }
-                    case "BAR":
-                    case "LINE":
-                    case "SCATTER":
-                        if (/[\s(]/.test(this._currentChar)) {
-                            return { type: "PLOT_TYPE", value: identifier.toUpperCase() };
-                        }
-                    case "MIN":
-                    case "MAX":
-                    case "AVG":
-                    case "COUNT":
-                    case "SUM":
-                        if (/[\s(]/.test(this._currentChar)) {
-                            return { type: "AGGREGATION_FUNCTION", value: identifier.toUpperCase() };
-                        }
-                    case "NULL":
-                        if (!this._currentChar || this._currentChar === " ") {
-                            return { type: "NULL", value: identifier.toUpperCase() };
-                        }
-                    default:
-                        // TODO: simplify this
-                        if (!this._currentChar || /[\s,)]/.test(this._currentChar)) {
-                            return { type: "IDENTIFIER", value: identifier };
-                        }
-                }
-            }
-            throw new exceptions_1.PQLError("Invalid character");
         }
-        return { type: "EOF", value: "" };
-    }
-    _advance() {
-        this._position++;
-        this._currentChar = this._input[this._position];
+        throw new exceptions_1.PQLError(`Invalid character ${this.currentChar} at position ${this.currentPosition}`);
     }
     _skipWhitespace() {
-        while (this._currentChar && /\s/.test(this._currentChar)) {
-            this._advance();
+        while (this.currentChar && /\s/.test(this.currentChar)) {
+            this._position++;
         }
-    }
-    _isAlphabetic(char) {
-        return /[A-Za-z]/.test(char);
-    }
-    _isDigit(char) {
-        return /[0-9]/.test(char);
     }
     _readAlphanumeric() {
         let result = "";
-        while (this._currentChar && /[A-Za-z0-9_]/.test(this._currentChar)) {
-            result += this._currentChar;
-            this._advance();
+        while (this.currentChar && /[A-Za-z0-9_]/.test(this.currentChar)) {
+            result += this.currentChar;
+            this._position++;
         }
         return result;
     }
     _readString() {
         let result = "";
-        while (this._currentChar !== "'") {
-            if (!this._currentChar) {
+        while (this.currentChar !== "'") {
+            if (!this.currentChar) {
                 throw new exceptions_1.PQLError("Unterminated string");
             }
-            result += this._currentChar;
-            this._advance();
+            result += this.currentChar;
+            this._position++;
         }
-        this._advance(); // Consume closing quote
+        this._position++; // Skip closing quote
         return result;
     }
     _readNumber() {
         let result = "";
-        while (this._currentChar && this._isDigit(this._currentChar)) {
-            result += this._currentChar;
-            this._advance();
+        while (this.currentChar && isDigit(this.currentChar)) {
+            result += this.currentChar;
+            this._position++;
         }
         return result;
     }
 }
 exports.Lexer = Lexer;
+function isAlphabetic(char) {
+    return /[A-Za-z]/.test(char);
+}
+function isDigit(char) {
+    return /[0-9]/.test(char);
+}

@@ -5,7 +5,7 @@ const exceptions_1 = require("./exceptions");
 const filters_1 = require("./filters");
 const pqlStatement_1 = require("./pqlStatement");
 /**
- * Parser for Plot Query Language (PQL) queries
+ * Parser for PQL queries
  */
 class Parser {
     constructor(lexer) {
@@ -34,7 +34,7 @@ class Parser {
             });
         }
         else {
-            plotCall.args.forEach((attribute, _) => {
+            plotCall.args.forEach(attribute => {
                 if (attribute.aggregationFunction) {
                     throw new exceptions_1.PQLError(`Cannot include aggregated column ${attribute.aggregationFunction}(${attribute.column}) without a group by clause`);
                 }
@@ -42,9 +42,7 @@ class Parser {
         }
     }
     _consumePlotClause() {
-        if (this._consumeToken("KEYWORD").value.toUpperCase() !== "PLOT") {
-            throw new exceptions_1.PQLError("Expected query to begin with PLOT");
-        }
+        this._consumeToken("KEYWORD", "PLOT");
         const plotType = this._consumeToken("PLOT_TYPE").value;
         this._consumeToken("LPAREN");
         const args = new Map();
@@ -116,7 +114,7 @@ class Parser {
             if (this._currentToken.value !== "OR") {
                 break;
             }
-            this._advanceToken();
+            this._currentToken = this._lexer.nextToken();
         }
         if (filters.length === 1) {
             return filters[0];
@@ -177,11 +175,6 @@ class Parser {
         const offset = Number(this._consumeToken("NUMBER").value);
         return { limit, offset };
     }
-    _advanceToken() {
-        const token = this._currentToken;
-        this._currentToken = this._lexer.nextToken();
-        return token;
-    }
     _consumeToken(tokenType, value) {
         const token = this._currentToken;
         if (token.type === tokenType && (!value || token.value === value)) {
@@ -189,11 +182,12 @@ class Parser {
             return token;
         }
         else {
-            throw new exceptions_1.PQLError(`Unexpected token ${JSON.stringify(this._currentToken)} at position ${this._lexer.currentPosition()}`);
+            throw new exceptions_1.PQLError(`Unexpected token ${JSON.stringify(this._currentToken)} at position ${this._lexer.currentPosition}`);
         }
     }
     _consumeComparisonValue() {
-        const token = this._advanceToken();
+        const token = this._currentToken;
+        this._currentToken = this._lexer.nextToken();
         switch (token.type) {
             case "STRING":
                 return token.value;
