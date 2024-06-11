@@ -38,6 +38,22 @@ describe("lexer.ts", () => {
         expect(actual).toEqual(expected);
     });
 
+    test("plot statement with escaped identifiers", () => {
+        const input = "PLOT BAR(` xcol `, `25`)";
+        const lexer = new Lexer(input);
+        const expected = [
+            { type: "KEYWORD", value: "PLOT" },
+            { type: "PLOT_TYPE", value: "BAR" },
+            { type: "LPAREN", value: "(" },
+            { type: "IDENTIFIER", value: " xcol " },
+            { type: "COMMA", value: "," },
+            { type: "IDENTIFIER", value: "25" },
+            { type: "RPAREN", value: ")" },
+        ];
+        const actual = getTokens(lexer);
+        expect(actual).toEqual(expected);
+    });
+
     test("plot statement with string where clause", () => {
         const input = "PLOT BAR(xcol, ycol) WHERE zcol = 'on'";
         const lexer = new Lexer(input);

@@ -24,6 +24,16 @@ describe("parser.ts", () => {
         ]);
     });
 
+    test("plot statement with escaped identifiers", () => {
+        const input = "PLOT BAR(` xcol `, `25`)";
+        const statement = new Parser(new Lexer(input)).parse();
+        expect(statement.plotCall.plotType).toBe("BAR");
+        expect(Array.from(statement.plotCall.args.values())).toEqual([
+            { column: " xcol " },
+            { column: "25" },
+        ]);
+    });
+
     test("plot statement with string where clause", () => {
         const input = "PLOT BAR(xcol, ycol) WHERE zcol = 'on'";
         const statement = new Parser(new Lexer(input)).parse();
