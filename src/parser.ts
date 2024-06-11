@@ -66,13 +66,6 @@ export class Parser {
             default:
                 throw new PQLError(`Invalid plot type ${plotType}`);
         }
-        while (this._currentToken.type === "COMMA") {
-            this._consumeToken("COMMA");
-            const identifierToken = this._consumeToken("IDENTIFIER");
-            this._consumeToken("COMPARISON_OPERATOR", "=");
-            const plotColumn = this._consumePlotColumn();
-            args.set(identifierToken.value, plotColumn);
-        }
         this._consumeToken("RPAREN");
         return { plotType, args };
     }
