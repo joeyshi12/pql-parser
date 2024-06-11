@@ -52,7 +52,10 @@ class Lexer {
         switch (this.currentChar) {
             case "'":
                 this._position++;
-                return { type: "STRING", value: this._readString() };
+                return { type: "STRING", value: this._readTo("'") };
+            case "`":
+                this._position++;
+                return { type: "IDENTIFIER", value: this._readTo("`") };
             case ",":
                 this._position++;
                 return { type: "COMMA", value: "," };
@@ -147,16 +150,16 @@ class Lexer {
         }
         return result;
     }
-    _readString() {
+    _readTo(endChar) {
         let result = "";
-        while (this.currentChar !== "'") {
+        while (this.currentChar !== endChar) {
             if (!this.currentChar) {
                 throw new exceptions_1.PQLError("Unterminated string");
             }
             result += this.currentChar;
             this._position++;
         }
-        this._position++; // Skip closing quote
+        this._position++; // Skip endChar
         return result;
     }
     _readNumber() {

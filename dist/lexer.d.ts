@@ -28,6 +28,6 @@ export declare class Lexer {
     nextToken(): Token;
     private _skipWhitespace;
     private _readAlphanumeric;
-    private _readString;
+    private _readTo;
     private _readNumber;
 }
