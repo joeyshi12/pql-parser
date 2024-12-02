@@ -4,9 +4,9 @@
 ![npm-publish.yml](https://github.com/joeyshi12/pql-parser/actions/workflows/npm-publish.yml/badge.svg)
 ![npm](https://img.shields.io/npm/v/pql-parser.svg)
 
-Plot query language parser library.
+Plot query language parser.
 
-A simple CSV visualizer tool made with this parser is hosted at <a href="https://devtools.joeyshi.xyz/csv_vis">https://devtools.joeyshi.xyz/csv_vis</a>.
+A 2D plot generation tool made with this parser is hosted at <a href="https://devtools.joeyshi.xyz/csv_vis">https://devtools.joeyshi.xyz/pql_compiler</a>.
 
 ## Syntax
 

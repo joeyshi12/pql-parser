@@ -7,7 +7,7 @@ describe("lexer.ts", () => {
         const lexer = new Lexer(input);
         const expected = [
             { type: "KEYWORD", value: "PLOT" },
-            { type: "PLOT_TYPE", value: "BAR" },
+            { type: "PLOT_FUNCTION", value: "BAR" },
             { type: "LPAREN", value: "(" },
             { type: "IDENTIFIER", value: "xcol" },
             { type: "COMMA", value: "," },
@@ -23,7 +23,7 @@ describe("lexer.ts", () => {
         const lexer = new Lexer(input);
         const expected = [
             { type: "KEYWORD", value: "PLOT" },
-            { type: "PLOT_TYPE", value: "BAR" },
+            { type: "PLOT_FUNCTION", value: "BAR" },
             { type: "LPAREN", value: "(" },
             { type: "IDENTIFIER", value: "xcol" },
             { type: "KEYWORD", value: "AS" },
@@ -43,7 +43,7 @@ describe("lexer.ts", () => {
         const lexer = new Lexer(input);
         const expected = [
             { type: "KEYWORD", value: "PLOT" },
-            { type: "PLOT_TYPE", value: "BAR" },
+            { type: "PLOT_FUNCTION", value: "BAR" },
             { type: "LPAREN", value: "(" },
             { type: "IDENTIFIER", value: " xcol " },
             { type: "COMMA", value: "," },
@@ -59,7 +59,7 @@ describe("lexer.ts", () => {
         const lexer = new Lexer(input);
         const expected = [
             { type: "KEYWORD", value: "PLOT" },
-            { type: "PLOT_TYPE", value: "BAR" },
+            { type: "PLOT_FUNCTION", value: "BAR" },
             { type: "LPAREN", value: "(" },
             { type: "IDENTIFIER", value: "xcol" },
             { type: "COMMA", value: "," },
@@ -79,7 +79,7 @@ describe("lexer.ts", () => {
         const lexer = new Lexer(input);
         const expected = [
             { type: "KEYWORD", value: "PLOT" },
-            { type: "PLOT_TYPE", value: "BAR" },
+            { type: "PLOT_FUNCTION", value: "BAR" },
             { type: "LPAREN", value: "(" },
             { type: "IDENTIFIER", value: "xcol" },
             { type: "COMMA", value: "," },
@@ -99,7 +99,7 @@ describe("lexer.ts", () => {
         const lexer = new Lexer(input);
         const expected = [
             { type: "KEYWORD", value: "PLOT" },
-            { type: "PLOT_TYPE", value: "BAR" },
+            { type: "PLOT_FUNCTION", value: "BAR" },
             { type: "LPAREN", value: "(" },
             { type: "IDENTIFIER", value: "xcol" },
             { type: "COMMA", value: "," },
@@ -119,7 +119,7 @@ describe("lexer.ts", () => {
         const lexer = new Lexer(input);
         const expected = [
             { type: "KEYWORD", value: "PLOT" },
-            { type: "PLOT_TYPE", value: "BAR" },
+            { type: "PLOT_FUNCTION", value: "BAR" },
             { type: "LPAREN", value: "(" },
             { type: "IDENTIFIER", value: "xcol" },
             { type: "COMMA", value: "," },
@@ -140,7 +140,7 @@ describe("lexer.ts", () => {
         const lexer = new Lexer(input);
         const expected = [
             { type: "KEYWORD", value: "PLOT" },
-            { type: "PLOT_TYPE", value: "BAR" },
+            { type: "PLOT_FUNCTION", value: "BAR" },
             { type: "LPAREN", value: "(" },
             { type: "IDENTIFIER", value: "xcol" },
             { type: "COMMA", value: "," },

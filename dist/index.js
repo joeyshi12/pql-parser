@@ -18,6 +18,3 @@ __exportStar(require("./exceptions"), exports);
 __exportStar(require("./types"), exports);
 __exportStar(require("./lexer"), exports);
 __exportStar(require("./parser"), exports);
-__exportStar(require("./filters"), exports);
-__exportStar(require("./plots"), exports);
-__exportStar(require("./pqlStatement"), exports);

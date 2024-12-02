@@ -114,7 +114,7 @@ class Lexer {
                 case "LINE":
                 case "SCATTER":
                     if (/[\s(]/.test(this.currentChar)) {
-                        return { type: "PLOT_TYPE", value: identifier.toUpperCase() };
+                        return { type: "PLOT_FUNCTION", value: identifier.toUpperCase() };
                     }
                 case "MIN":
                 case "MAX":
