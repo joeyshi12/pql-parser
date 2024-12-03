@@ -131,9 +131,7 @@ export class Lexer {
                         return { type: "AGGREGATION_FUNCTION", value: identifier.toUpperCase() };
                     }
                 case "NULL":
-                    if (!this.currentChar || this.currentChar === " ") {
-                        return { type: "NULL", value: identifier.toUpperCase() };
-                    }
+                    return { type: "NULL", value: identifier.toUpperCase() };
                 default:
                     // TODO: simplify this
                     if (!this.currentChar || /[\s,)]/.test(this.currentChar)) {

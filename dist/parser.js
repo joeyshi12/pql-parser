@@ -26,7 +26,7 @@ class Parser {
             this._consumeToken("KEYWORD");
             query.groupKey = this._consumeToken("IDENTIFIER").value;
         }
-        if (this._currentToken.value == "LIMIT") {
+        if (this._currentToken.value === "LIMIT") {
             query.limitAndOffset = this._consumeLimitAndOffsetClause();
         }
         this._consumeToken("EOF");
