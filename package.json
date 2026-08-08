@@ -1,6 +1,6 @@
 {
   "name": "pql-parser",
-  "version": "0.4.1",
+  "version": "0.5.1",
   "description": "Plot query language parser",
   "repository": {
     "type": "git",
