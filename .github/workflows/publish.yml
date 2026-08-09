@@ -1,0 +1,30 @@
+name: Node.js Package
+
+on:
+  workflow_dispatch:
+  release:
+    types: [created]
+
+permissions:
+  id-token: write # required for OIDC trusted publishing and provenance
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          # Node 24 bundles npm >= 11.5.1, which is the minimum required for
+          # OIDC trusted publishing. Node 22 only bundles npm 10.x.
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false # never use caching in release builds
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm test
+      # Authenticates via OIDC against the trusted publisher configured for
+      # this package on npmjs.com. No NPM_TOKEN secret is required, and
+      # provenance attestations are generated automatically.
+      - run: npm publish
